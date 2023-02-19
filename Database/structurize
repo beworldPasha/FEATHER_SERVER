@@ -4,7 +4,6 @@ import glob
 import sys
 import os
 import eyed3
-import pdb
 
 
 def assert_position(f, mp3):
@@ -35,6 +34,7 @@ c.execute("""CREATE TABLE songs (
 artist text,
 title text,
 album text,
+track_num integer,
 path text
 )""")
 
@@ -48,7 +48,7 @@ for f in glob.glob("**", recursive=True):
         covers.append(f)
         continue
     if f[-4:] != '.mp3': continue
-    
+    os.chmod(f, 0o644);
     try:
         audiofile = eyed3.load(f)
     except IOError:
@@ -58,22 +58,24 @@ for f in glob.glob("**", recursive=True):
         new_path = assert_position(f, audiofile)
     except:
         strange.append(f)
-    c.execute("SELECT artist, title, album, path FROM songs WHERE artist = \"{}\" AND title = \"{}\" AND album = \"{}\" AND path = \"{}\"".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, new_path))
+    c.execute("SELECT artist, title, album, track_num, path FROM songs WHERE artist = \"{}\" AND title = \"{}\" AND album = \"{}\"".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, audiofile.tag.track_num.count))
     tmp=c.fetchone()
     if(tmp!=None):
         print(tmp, "already exists")
     else:
-        c.execute("INSERT INTO songs VALUES (\"{}\", \"{}\", \"{}\", \"{}\")".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, new_path))
+        c.execute("INSERT INTO songs VALUES (\"{}\", \"{}\", \"{}\", \"{}\", \"{}\")".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, audiofile.tag.track_num.count, new_path))
 ###
+
 ### # Обработать обложки альбомов
 for cov in covers:
+    os.chmod(cov, 0o644);
     if '/' in cov:
         untrimmed = cov[cov.rfind('/'):]
         trimmed = untrimmed[7:untrimmed.rfind('.')]
     else:
         trimmed = cov[cov.find("COVER_")+6:cov.rfind('.')]
         untrimmed = cov
-    c.execute("SELECT artist, title, album, path FROM songs WHERE UPPER(album) = UPPER(\"{}\")".format(trimmed));
+    c.execute("SELECT artist, title, album, track_num, path FROM songs WHERE UPPER(album) = UPPER(\"{}\")".format(trimmed));
     albums = c.fetchall()
     if(len(albums)==0):
         print(trimmed)
@@ -83,17 +85,15 @@ for cov in covers:
     new_name = "{}/{}/{}".format(song_data[0], song_data[2], untrimmed)
     print(cov + '->' + new_name)
     os.rename(cov, new_name)
-
-
 ###
-print() # Вывести песни, с обработкой которых возникли проблемы
+
+print()
 print("strange:", strange, len(strange))
 
-# Вывести всю БД
-c.execute("SELECT artist, title, album, path FROM songs ORDER BY album")
-print("|-------Artist-------+-------Title--------+-------Album--------+--------------------------------------Path--------------------------------------|")
+c.execute("SELECT artist, title, album, track_num, path FROM songs ORDER BY album")
+print("|-------Artist-------+-------Title--------+-------Album--------+-№-+--------------------------------------Path--------------------------------------|")
 for song in c.fetchall():
-    print(f"|%20s|%20s|%20s|%80s|" % (song[0][:20], song[1][:20], song[2][:20], song[3][-80:]))
+    print(f"|%20s|%20s|%20s|%3s|%80s|" % (song[0][:20], song[1][:20], song[2][:20], song[3], song[4][-80:]))
 
 db.commit()
 db.close()
