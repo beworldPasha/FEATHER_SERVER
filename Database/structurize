@@ -1,0 +1,99 @@
+#!/usr/bin/python
+import sqlite3
+import glob
+import sys
+import os
+import eyed3
+import pdb
+
+
+def assert_position(f, mp3):
+    parts = f.split('/')
+    if parts[0] == mp3.tag.artist and\
+       parts[1] == mp3.tag.album and parts[2] == mp3.tag.title:
+        return
+    if mp3.tag.artist == None or mp3.tag.album == None or mp3.tag.title == None or\
+       mp3.tag.artist == "" or mp3.tag.album == "" or mp3.tag.title == "" or mp3.tag.track_num.count==None:
+        raise Error(mp3.tag.title)
+    try:
+        os.makedirs(mp3.tag.artist + '/' + mp3.tag.album)
+    except FileExistsError:
+        pass
+    except TypeError:
+        print(mp3.tag.title)
+    new_path = mp3.tag.artist + '/' + mp3.tag.album + '/' + mp3.tag.title + '.mp3'
+    os.rename(f, new_path)
+    return new_path
+
+
+try: os.remove('__musicdb.db')
+except: pass
+db = sqlite3.connect('__musicdb.db')
+
+c = db.cursor()
+c.execute("""CREATE TABLE songs (
+artist text,
+title text,
+album text,
+path text
+)""")
+
+strange = []
+covers = [] # Сохранить пути к обложкам и обработать их потом
+
+
+### # Скорректировать структуру папок
+for f in glob.glob("**", recursive=True):
+    if f.find("COVER_")!=-1:
+        covers.append(f)
+        continue
+    if f[-4:] != '.mp3': continue
+    
+    try:
+        audiofile = eyed3.load(f)
+    except IOError:
+        continue
+    
+    try:
+        new_path = assert_position(f, audiofile)
+    except:
+        strange.append(f)
+    c.execute("SELECT artist, title, album, path FROM songs WHERE artist = \"{}\" AND title = \"{}\" AND album = \"{}\" AND path = \"{}\"".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, new_path))
+    tmp=c.fetchone()
+    if(tmp!=None):
+        print(tmp, "already exists")
+    else:
+        c.execute("INSERT INTO songs VALUES (\"{}\", \"{}\", \"{}\", \"{}\")".format(audiofile.tag.artist, audiofile.tag.title, audiofile.tag.album, new_path))
+###
+### # Обработать обложки альбомов
+for cov in covers:
+    if '/' in cov:
+        untrimmed = cov[cov.rfind('/'):]
+        trimmed = untrimmed[7:untrimmed.rfind('.')]
+    else:
+        trimmed = cov[cov.find("COVER_")+6:cov.rfind('.')]
+        untrimmed = cov
+    c.execute("SELECT artist, title, album, path FROM songs WHERE UPPER(album) = UPPER(\"{}\")".format(trimmed));
+    albums = c.fetchall()
+    if(len(albums)==0):
+        print(trimmed)
+        print(cov, "doesn't have an album")
+        continue
+    song_data = albums[0]
+    new_name = "{}/{}/{}".format(song_data[0], song_data[2], untrimmed)
+    print(cov + '->' + new_name)
+    os.rename(cov, new_name)
+
+
+###
+print() # Вывести песни, с обработкой которых возникли проблемы
+print("strange:", strange, len(strange))
+
+# Вывести всю БД
+c.execute("SELECT artist, title, album, path FROM songs ORDER BY album")
+print("|-------Artist-------+-------Title--------+-------Album--------+--------------------------------------Path--------------------------------------|")
+for song in c.fetchall():
+    print(f"|%20s|%20s|%20s|%80s|" % (song[0][:20], song[1][:20], song[2][:20], song[3][-80:]))
+
+db.commit()
+db.close()
