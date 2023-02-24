@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AppAPI</string>
+    <string name="image_description">Фотография трека или альбома</string>
+    <string name="song_name">Название песни</string>
+    <string name="artist_name">Имя испольнителя</string>
+    <string name="editor_default_text">Введите название песни</string>
+    <string name="button_text">Включить песню</string>
+</resources>
