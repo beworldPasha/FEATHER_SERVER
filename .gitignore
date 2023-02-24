@@ -21,3 +21,10 @@ gradle
 gradle.properties
 build.gradle
 .idea
+
+/app/build
+/app/build.gradle
+/app/proguard-rules.pro
+/app/src/androidTest
+/app/src/test
+
