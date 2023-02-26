@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ "$0" = "./runserver" ] && pgrep java
+then
+    echo $0
+    killall java 2> /dev/null
+    sleep 2
+    echo Server killed
+fi
+
+if ! pgrep java >/dev/null
+then
+    echo "=======================================================================================================================================================================================================================" >> /var/www/html/serverlog.txt
+    (java -classpath ".:sqlite-jdbc-3.40.1.0.jar" Server >> /var/www/html/serverlog.txt 2>>/var/www/html/serverlog.txt) &
+    echo Server started
+fi
