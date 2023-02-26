@@ -12,7 +12,7 @@ public class Server {
     private static BufferedWriter out;
 
     public static final String IP = "84.246.85.148";
-    public static final int PORT = 8000;
+    public static final int PORT = 65231;
 
     public static void main(String[] args) {
         try {
@@ -25,13 +25,15 @@ public class Server {
                     in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
                     String command = in.readLine();
+		    if(command.equals("sTop")) return;
                     if (command == null) {
                         out.write(String.format("ERROR: received null string [%s]\n", new Date().toString()));
                         continue;
                     }
-                    System.out.printf("Received command: `%s` [%s]\n", command, new Date());
-                    String answer = processCommand(command);
+		    System.out.printf("Received command: `%s` [%s]\n", command, new Date());
+		    String answer = processCommand(command);
                     out.write(answer);
+		    System.out.println("Sent to client: " + answer);
                     out.flush();
                 }
             } finally {
@@ -48,6 +50,7 @@ public class Server {
             e.printStackTrace();
             System.out.printf("Exception: %s [%s]\n", e.getMessage(), new Date());
         }
+	System.out.println("Program stopped");
     }
 
     public static String processCommand(String command) throws Exception {
@@ -106,14 +109,14 @@ public class Server {
                 .append("\", \"artist\": \"").append(rs.getString("artist"))
                 .append("\", \"playlists\": [\"").append(rs.getString("artist")).append("/").append(rs.getString("album"));
 
-        result.append("\"], \"image\": \"").append(IP).append("/Music/").append(rs.getString("artist"))
+        result.append("\"], \"image\": \"http://").append(IP).append("/Music/").append(rs.getString("artist"))
                 .append('/').append(rs.getString("album")).append("/COVER_").append(rs.getString("album"))
                 .append(".jpg\",");
 
         result.append("\"length\": ").append(rs.getString("length"))
                 .append(", \"trackIndex\": ").append(rs.getString("track_num"));
 
-        result.append(", \"url\": \"").append(IP).append("/Music/")
+        result.append(", \"url\": \"http://").append(IP).append("/Music/")
                 .append(rs.getString("path"))
                 .append(".mp3\"}\n");
         return result.toString();
@@ -135,7 +138,7 @@ public class Server {
             result.append("\"").append(artist).append("/").append(s).append("\"");
             if (i++ < albums.size() - 1) result.append(", ");
         }
-        result.append("], \"image\": \"")
+        result.append("], \"image\": \"http://")
                 .append(IP).append("/Music/")
                 .append(artist).append("/COVER.jpg\"}\n");
         return result.toString();
@@ -159,7 +162,7 @@ public class Server {
             else break;
         }
         result.append("], \"length\": ").append(length)
-                .append(", \"image\": \"").append(IP).append("/Music/").append(artist).append("/").append(album).append("/COVER_").append(album).append(".jpg\"")
+                .append(", \"image\": \"http://").append(IP).append("/Music/").append(artist).append("/").append(album).append("/COVER_").append(album).append(".jpg\"")
                 .append(", \"artists\": [");
         int i=0;
         for(String s : artists){
