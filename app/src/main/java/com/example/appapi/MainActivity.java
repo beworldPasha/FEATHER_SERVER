@@ -1,11 +1,12 @@
 package com.example.appapi;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.feather.*;
 
 
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -14,6 +15,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+
+import java.io.IOException;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
     private static ImageView imageView;
@@ -21,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     private static TextView artistName;
     private static EditText editor;
     private static Button buttonStart;
+
+    private static MediaPlayer mediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        FeatherAPI.getInstance().startSession("84.246.85.148", 8000);
+        FeatherAPI.getInstance().startSession("84.246.85.148", 65231);
 
         String data = editor.getText().toString();
 
@@ -53,24 +61,34 @@ public class MainActivity extends AppCompatActivity {
         songName.setText(song.name);
         artistName.setText(song.artist);
 
-        MediaPlayer mediaPlayer = new MediaPlayer();
-
         try {
+            URL newurl = new URL(song.image);
+            imageView.setImageBitmap(BitmapFactory.
+                    decodeStream(newurl.openConnection().getInputStream()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Toast.makeText(this, song.url, Toast.LENGTH_SHORT).show();
+        try {
+            mediaPlayer = new MediaPlayer();
             mediaPlayer.setAudioAttributes(
-                    new AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .build()
-            );
+                    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
+            mediaPlayer.reset();
             mediaPlayer.setDataSource(song.url);
-            mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mediaPlayer.prepare();
-            mediaPlayer.start();
+
+            mediaPlayer.setOnPreparedListener((m) -> {
+                mediaPlayer.start();
+            });
+
+            mediaPlayer.prepareAsync();
         } catch (Exception exception) {
             exception.printStackTrace();
         }
 
-        FeatherAPI.getInstance().closeSession();
+
+        //FeatherAPI.getInstance().closeSession();
     };
 
 
