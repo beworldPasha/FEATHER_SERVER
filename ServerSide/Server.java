@@ -109,7 +109,7 @@ public class Server {
                 .append("\", \"artist\": \"").append(rs.getString("artist"))
                 .append("\", \"playlists\": [\"").append(rs.getString("artist")).append("/").append(rs.getString("album"));
 
-        result.append("\"], \"image\": \"http://").append(IP).append("/Music/").append(rs.getString("artist"))
+        result.append("\"], \"image\":  \"http://").append(IP).append("/Music/").append(rs.getString("artist"))
                 .append('/').append(rs.getString("album")).append("/COVER_").append(rs.getString("album"))
                 .append(".jpg\",");
 
@@ -152,8 +152,8 @@ public class Server {
         result.append("{\"songs\": [");
         int length=0;
         rs.next();
-        while (true) {
-            result.append("\"").append(rs.getString("path")).append("\"");
+	while (true) {
+            result.append("{\"artist\": \"").append(rs.getString("artist")).append("\", \"title\": \"").append(rs.getString("title")).append("\", \"image\": \"http://").append(IP).append("/Music/").append(artist).append("/").append(album).append("/COVER_").append(album).append(".jpg\"}");
             artists.add(rs.getString("artist"));
             ++length;
             if (rs.next()){
@@ -163,7 +163,8 @@ public class Server {
         }
         result.append("], \"length\": ").append(length)
                 .append(", \"image\": \"http://").append(IP).append("/Music/").append(artist).append("/").append(album).append("/COVER_").append(album).append(".jpg\"")
-                .append(", \"artists\": [");
+	    .append(", \"name\": \"").append(album)
+                .append("\", \"artists\": [");
         int i=0;
         for(String s : artists){
             result.append("\"").append(s).append("\"");
