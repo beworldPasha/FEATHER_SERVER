@@ -1,30 +1,23 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# built application files
+*.apk
+*.ap_
+
+# Java class files
+*.class
+
+# built native files (uncomment if you build your own)
+# *.o
+# *.so
+
+# generated files
+bin/
+gen/
+
+# Ignore gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
 local.properties
 
-settings.gradle
-gradlew
-gradlew.bat
-gradle
-gradle.properties
-build.gradle
 .idea
-
-/app/build
-/app/build.gradle
-/app/proguard-rules.pro
-/app/src/androidTest
-/app/src/test
-

@@ -3,6 +3,9 @@
     <string name="image_description">Фотография трека или альбома</string>
     <string name="song_name">Название песни</string>
     <string name="artist_name">Имя испольнителя</string>
-    <string name="editor_default_text">Введите название песни</string>
+    <string name="editor_default_text">Введите название</string>
     <string name="button_text">Включить песню</string>
+    <string name="playlist_button_text">Найти альбом</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
