@@ -1,0 +1,138 @@
+#!/usr/bin/python3
+# -*- coding: utf-8
+import sqlite3
+import glob
+import sys
+import os
+import eyed3
+import pdb
+
+
+if len(sys.argv) <= 1:
+    print("structurize DB DIR")
+    exit()
+else:
+    dbfile = sys.argv[1]
+    fldr = sys.argv[2]
+
+
+
+def assert_position(f, mp3):
+    parts = f.split('/')[-3:]
+    if parts[0] == mp3.tag.artist and\
+       parts[1] == mp3.tag.album and parts[2] == mp3.tag.title:
+        return mp3.tag.artist + '/' + mp3.tag.album + '/' + mp3.tag.title
+    if (None in (mp3.tag.artist, mp3.tag.album,
+                 mp3.tag.title, mp3.tag.track_num.count)) or\
+            "" in (mp3.tag.artist, mp3.tag.album, mp3.tag.title):
+        raise Exception(mp3.tag.title)
+
+    try:
+        os.makedirs(fldr + '/' + mp3.tag.artist + '/' + mp3.tag.album)
+    except FileExistsError:
+        pass
+    except TypeError:
+        print(mp3.tag.title)
+
+    new_path = fldr + '/' + mp3.tag.artist + '/' +\
+        mp3.tag.album + '/' + mp3.tag.title
+    os.rename(f, new_path + '.mp3')
+    return mp3.tag.artist + '/' + mp3.tag.album + '/' + mp3.tag.title
+
+
+
+db = sqlite3.connect(dbfile)
+c = db.cursor()
+
+c.execute("SELECT name FROM sqlite_master WHERE name='song'")
+if len(c.fetchall()) == 0:
+    c.execute("""CREATE TABLE song (
+    artist text,
+    title text,
+    album text,
+    track_num integer,
+    length integer,
+    path text
+    )""")
+else:
+    c.execute("DELETE  FROM song")
+
+
+strange = []
+covers = []  # Сохранить пути к обложкам и обработать их потом
+
+
+# Скорректировать структуру папок
+for f in glob.glob(f"{fldr}/**", recursive=True):
+    print(f)
+    if f.find("COVER_") != -1:
+        covers.append(f)
+        continue
+    if f[-4:] != '.mp3':
+        continue
+    os.chmod(f, 0o644)
+    try:
+        audiofile = eyed3.load(f)
+    except IOError:
+        continue
+
+    try:
+        new_path = assert_position(f, audiofile)
+    except Exception:
+        strange.append(f)
+
+    fmt = """SELECT * FROM song
+    WHERE artist = \"{}\" AND title = \"{}\" AND album = \"{}\""""
+    query = fmt.format(audiofile.tag.artist, audiofile.tag.title,
+                       audiofile.tag.album, audiofile.tag.track_num.count)
+    c.execute(query)
+    tmp = c.fetchone()
+    if tmp is not None:
+        print(tmp, "already exists")
+    else:
+        fmt = """INSERT INTO song VALUES
+        (\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\")"""
+        query = fmt.format(audiofile.tag.artist, audiofile.tag.title,
+                           audiofile.tag.album, audiofile.tag.track_num.count,
+                           int(audiofile.info.time_secs), new_path)
+        c.execute(query)
+
+
+# Обработать обложки альбомов
+for cov in covers:
+    os.chmod(cov, 0o644)
+    if '/' in cov:
+        untrimmed = cov[cov.rfind('/'):]
+        trimmed = untrimmed[7:untrimmed.rfind('.')]
+    else:
+        trimmed = cov[cov.find("COVER_")+6:cov.rfind('.')]
+        untrimmed = cov
+    c.execute("SELECT * FROM song WHERE UPPER(album) = UPPER(\"{}\")"
+              .format(trimmed))
+    albums = c.fetchall()
+    if len(albums) == 0:
+        print(trimmed)
+        print(cov, "doesn't have an album")
+        continue
+    song_data = albums[0]
+    new_name = "{}/{}/COVER_{}.jpg"\
+        .format(song_data[0], song_data[2], song_data[2])
+    print(cov + '->' + new_name)
+    os.rename(cov, fldr + '/' + new_name)
+    os.system("cp '%s' '%s/COVER.jpg'" % (fldr + '/' + new_name, fldr + '/' +
+                                          song_data[0]))
+
+
+print()
+print("strange:", strange, len(strange))
+
+c.execute("""SELECT artist, title, album, track_num, length, path
+FROM song ORDER BY album""")
+print("|--------Artist--------+--------Title---------+--------Album---------+-№-+-Len-+------------------------------------Path-----------------------------------|")
+for song in c.fetchall():
+    print("|%22s|%22s|%22s|%3s|%5s|%75s|" %
+          (song[0][:22], song[1][:22], song[2][:22],
+           song[3], song[4], song[5][-75:]))
+
+db.commit()
+db.close()

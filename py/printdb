@@ -1,0 +1,19 @@
+#!/usr/bin/python3
+# -*- coding: utf-8
+import sqlite3
+import sys
+
+
+if len(sys.argv) <= 1:
+    print("printdb DB")
+    exit()
+else:
+    dbfile = sys.argv[1]
+
+db = sqlite3.connect(dbfile)
+c = db.cursor()
+c.execute("SELECT artist, title, album, track_num, length, path FROM song ORDER BY album")
+print("|--------Artist--------+--------Title---------+--------Album---------+-№-+-Len-+------------------------------------Path-----------------------------------|")
+for song in c.fetchall():
+    print(f"|%22s|%22s|%22s|%3s|%5s|%75s|" % (song[0][:22], song[1][:22], song[2][:22], song[3], song[4], song[5][-75:]))
+db.close()
