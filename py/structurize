@@ -55,7 +55,7 @@ if len(c.fetchall()) == 0:
     path text
     )""")
 else:
-    c.execute("DELETE  FROM song")
+    c.execute("DELETE FROM song")
 
 
 strange = []

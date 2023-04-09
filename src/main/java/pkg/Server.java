@@ -3,6 +3,7 @@ package pkg;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.*;
 import java.util.*;
 import java.sql.*;
 import java.util.Date;
@@ -13,10 +14,16 @@ public class Server {
     private static BufferedReader in;
     private static BufferedWriter out;
 
+    private static PrivateKey privateKey;
+    private static PublicKey publicKey;
+
     public static final String IP = "84.246.85.148";
     public static final int PORT = 65231;
+    public static final String publicKeyFileAddress = "serverkey.pub";
+    public static final String privateKeyFileAddress = "serverkey";
 
     public static void main(String[] args) {
+        ensureKeys();
         try {
             try {
                 server = new ServerSocket(PORT);
@@ -24,9 +31,9 @@ public class Server {
                 for (; ; ) {
                     System.out.printf("! waiting for input ! [%s]\n", new Date());
                     clientSocket = server.accept();
-                    in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-                    String command = in.readLine();
+                    in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    String command = decipher(in.readLine());
                     if (command.equals("sTop")) return;
                     System.out.printf("Received command: `%s` [%s]\n", command, new Date());
                     String answer = processCommand(command);
@@ -41,17 +48,36 @@ public class Server {
                 System.out.printf("Server closed [%s]\n", new Date());
                 server.close();
             }
+        } catch (ClassNotFoundException e){
+            e.printStackTrace();
+            System.out.printf("ClassNotFoundException: %s [%s]\n", e.getMessage(), new Date());
         } catch (IOException e) {
             e.printStackTrace();
             System.out.printf("IOException: %s [%s]\n", e.getMessage(), new Date());
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.printf("Exception: %s [%s]\n", e.getMessage(), new Date());
         }
         System.out.println("Program stopped");
     }
 
-    public static String processCommand(String command) throws Exception {
+    private static String decipher(String str) throws IOException, ClassNotFoundException {
+        return str;
+    }
+
+    private static void ensureKeys() {
+        File pubKeyFile = new File(publicKeyFileAddress);
+        File privKeyFile = new File(privateKeyFileAddress);
+        if(pubKeyFile.exists() && privKeyFile.exists()){
+            privateKey = Rsa.readPrivateKey(privKeyFile);
+            publicKey = Rsa.readPublicKey(pubKeyFile);
+        }else {
+            KeyPair pair = Rsa.generatePair();
+            privateKey = pair.getPrivate();
+            publicKey = pair.getPublic();
+            Rsa.writePublicKey(pubKeyFile, publicKey);
+            Rsa.writePrivateKey(privKeyFile, privateKey);
+        }
+    }
+
+    public static String processCommand(String command){
         Connection connection = null;
         // artist, title, album, track_num, length, path - Структура таблицы
         try {
@@ -60,33 +86,46 @@ public class Server {
             st.setQueryTimeout(30);
             String[] cmd = command.split("_"); // cmd[0] == "" всегда
             if (cmd.length == 1) return "Illegal command\n";
-            if (cmd[1].equals("get")) {
-                if (cmd.length != 4) return "Illegal command";
-                StringTokenizer tokenizer = new StringTokenizer(cmd[3], "/");
-                if (cmd[2].equals("song")) {
-                    String query = String.format("SELECT * FROM songs WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\") AND UPPER(title) = UPPER(\"%s\")", tokenizer.nextToken(), tokenizer.nextToken(), tokenizer.nextToken());
-                    ResultSet rs = st.executeQuery(query);
-                    return formSong(rs);
-                } else if (cmd[2].equals("artist")) {
-                    String artist = tokenizer.nextToken();
-                    String query = String.format("SELECT * FROM songs WHERE UPPER(artist) = UPPER(\"%s\")", artist);
-                    ResultSet rs = st.executeQuery(query);
-                    return formArtist(rs);
-                } else if (cmd[2].equals("playlist") || cmd[2].equals("album")) {
-                    String artist = tokenizer.nextToken();
-                    String album = tokenizer.nextToken();
-                    String query = String.format("SELECT * FROM songs WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\")", artist, album);
-                    ResultSet rs = st.executeQuery(query);
-                    return formPlaylist(rs);
-                } else
-                    return "Illegal command\n";
-            } else if (cmd[1].equals("init")) {
-                ResultSet rs = st.executeQuery("SELECT * FROM songs");
+            StringTokenizer tokenizer = new StringTokenizer(command, "/");
+            tokenizer.nextToken();
+            if(command.startsWith("_establish_")) {
+                return "Established\n";
+            }else if(command.equals("get_song_")){
+                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\") AND UPPER(title) = UPPER(\"%s\")", tokenizer.nextToken(), tokenizer.nextToken(), tokenizer.nextToken());
+                ResultSet rs = st.executeQuery(query);
+                return formSong(rs);
+            }else if(command.startsWith("_get_artist_")) {
+                String artist = tokenizer.nextToken();
+                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\")", artist);
+                ResultSet rs = st.executeQuery(query);
+                return formArtist(rs);
+            }else if(command.startsWith("_get_playlist") || command.startsWith("_get_album_")){
+                String artist = tokenizer.nextToken();
+                String album = tokenizer.nextToken();
+                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\")", artist, album);
+                ResultSet rs = st.executeQuery(query);
+                return formPlaylist(rs);
+            }else if(command.startsWith("_init_")){
+                ResultSet rs = st.executeQuery("SELECT * FROM song");
                 return formInit(rs);
-            } else if (cmd[1].equals("set"))
+            }else if(command.startsWith("_set_")) {
                 return "Not implemented\n";
-            else
-                return "Illegal command\n";
+            }else if(command.startsWith("_register_")) {
+                String login = tokenizer.nextToken();
+                String passwdHash = tokenizer.nextToken();
+                String query = String.format("SELECT login FROM users WHERE UPPER(login) = UPPER(\"%s\")", login);
+                ResultSet rs = st.executeQuery(query);
+                if (rs.next()) {
+                    return "Already registered\n";
+                } else {
+                    query = String.format("INSERT INTO users VALUES (\"%s\", \"%s\")", login, passwdHash);
+                    st.execute(query);
+                    return "Successfully registered\n";
+                }
+            }else if(command.startsWith("_login_")){
+
+            }else
+                return "Not implemented\n";
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.printf("SQLException: %s [%s]%n", e.getMessage(), new Date());
