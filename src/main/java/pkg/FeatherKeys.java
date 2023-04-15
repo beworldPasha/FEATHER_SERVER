@@ -1,10 +1,7 @@
 package pkg;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,28 +24,30 @@ public class FeatherKeys {
         String message = "Hello?!";
 
         // <Generate secret>
-//        writeKey(sec, generateSecret());
-//        SecretKey secretKey = readSecret(sec);
-        SecretKey secretKey = generateSecret();
+        writeKey(sec, generateSecret()); // Генерируется ключ и сразу записывается в файл sec
+        SecretKey secretKey = readSecret(sec); // Ключ считывается из файла
         // </Generate secret>
 
         // <Generate RSA>
         KeyPair pair = generatePair();
+
         writeKey(pri, pair.getPrivate());
         writeKey(pub, pair.getPublic());
+
         PrivateKey privateKey = readPrivateKey(pri);
         PublicKey publicKey = readPublicKey(pub);
         // </Generate RSA>
 
         // <Use RSA>
-        byte[] encrypted = cipher(publicKey, FeatherKeys.ENCRYPT, message.getBytes());
-        byte[] decrypted = cipher(privateKey, FeatherKeys.DECRYPT, encrypted);
+        byte[] encrypted = cipher(publicKey, FeatherKeys.ENCRYPT, message.getBytes()); // шифруется публичным
+        byte[] decrypted = cipher(privateKey, FeatherKeys.DECRYPT, encrypted); // дешифруется приватным
         if(message.equals(new String(decrypted, StandardCharsets.UTF_8)))
             System.out.println("Test 1 passed");
         else
             System.out.println("Test 1 didn't pass");
-        encrypted = cipher(privateKey, FeatherKeys.ENCRYPT, message.getBytes());
-        decrypted = cipher(publicKey, FeatherKeys.DECRYPT, encrypted);
+
+        encrypted = cipher(privateKey, FeatherKeys.ENCRYPT, message.getBytes()); // шифруется приватным
+        decrypted = cipher(publicKey, FeatherKeys.DECRYPT, encrypted); // дешифруется публичным
         if(message.equals(new String(decrypted, StandardCharsets.UTF_8)))
             System.out.println("Test 2 passed");
         else
@@ -56,33 +55,49 @@ public class FeatherKeys {
         // </Use RSA>
 
         // <Use secret>
-        encrypted = cipher(secretKey, ENCRYPT, message.getBytes());
-        decrypted = cipher(secretKey, DECRYPT, encrypted);
-        if(message.equals(new String(decrypted, StandardCharsets.UTF_8)))
+        encrypted = cipher(secretKey, ENCRYPT, message.getBytes()); // message зашифровывается ключом secretKey
+        decrypted = cipher(secretKey, DECRYPT, encrypted); // расшифровывается
+        if(message.equals(new String(decrypted, StandardCharsets.UTF_8))) // Проверка на совпадение
             System.out.println("Test 3 passed");
         else
             System.out.println("Test 3 didn't pass");
-
         // </Use secret>
 
+        // Удалить файлы с ключами:
         // pub.delete();
         // pri.delete();
+        // sec.delete();
     }
 
-
-
     public static SecretKey generateSecret() {
-        try{
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-            keyGenerator.init(256);
-            return keyGenerator.generateKey();
-        }catch(NoSuchAlgorithmException e){
+        return null;
+    }
+
+    /*
+    * readSecret считывает секретный ключ из массива байт
+    * по сути - десериализация
+    * сериализация делается методом getEncoded() (скорее всего)
+     */
+    private static SecretKey readSecret(byte[] bytes) {
+        return null;
+    }
+    /*
+    * из предыдущей функции закономерно следует чтение из файла
+     */
+    private static SecretKey readSecret(File file) {
+        try {
+            byte[] pubKeyBytes = Files.readAllBytes(file.toPath());
+            return readSecret(pubKeyBytes);
+        }catch(IOException e){
             e.printStackTrace();
-            throw new RuntimeException("Could not generate secret key");
+            throw new RuntimeException("Could not read secret key");
         }
     }
 
 
+
+    public static final int ENCRYPT = Cipher.ENCRYPT_MODE;
+    public static final int DECRYPT = Cipher.DECRYPT_MODE;
     /*
     * Функция cipher(key, way, msg)
     * Зашифровывает (way = ENCRYPT)
@@ -91,12 +106,21 @@ public class FeatherKeys {
     *
     * Возвращает массив байт
      */
-    public static final int ENCRYPT = Cipher.ENCRYPT_MODE;
-    public static final int DECRYPT = Cipher.DECRYPT_MODE;
 
-    public static byte[] cipher(Key key, int way, byte[] msg){
+    public static byte[] cipher(Key key, int way, byte[] msg){ // Работает
         try {
             Cipher cipher = Cipher.getInstance("RSA");
+            cipher.init(way, key);
+            return cipher.doFinal(msg);
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("Could not (de)cipher" + way);
+        }
+    }
+
+    public static byte[] cipher(SecretKey key, int way, byte[] msg){ // Работает
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
             cipher.init(way, key);
             return cipher.doFinal(msg);
         }catch(Exception e){
@@ -110,18 +134,7 @@ public class FeatherKeys {
     * Возвращает объект PrivateKey
      */
 
-    private static SecretKey readSecret(File file) {
-        try {
-            byte[] secretKeyBytes = Files.readAllBytes(file.toPath());
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("AES");
-            SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, "AES");
-            return keyFactory.generateSecret(keySpec);
-        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Could not read secret key");
-        }
-    }
-    public static PrivateKey readPrivateKey(File file){
+    public static PrivateKey readPrivateKey(File file){ // Работает
         try {
             byte[] privKeyBytes = Files.readAllBytes(file.toPath());
             return readPrivateKey(privKeyBytes);
@@ -130,7 +143,7 @@ public class FeatherKeys {
             throw new RuntimeException("Could not read private key");
         }
     }
-    public static PrivateKey readPrivateKey(byte[] privKeyBytes){
+    public static PrivateKey readPrivateKey(byte[] privKeyBytes){ // Работает
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privKeyBytes);
@@ -146,7 +159,7 @@ public class FeatherKeys {
      * Считывает приватный ключ из файла
      * Возвращает объект PublicKey
      */
-    public static PublicKey readPublicKey(File file){
+    public static PublicKey readPublicKey(File file){ // Работает
         try {
             byte[] pubKeyBytes = Files.readAllBytes(file.toPath());
             return readPublicKey(pubKeyBytes);
@@ -156,7 +169,7 @@ public class FeatherKeys {
         }
     }
 
-    public static PublicKey readPublicKey(byte[] bytes){
+    public static PublicKey readPublicKey(byte[] bytes){ // Работает
         try{
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(bytes);
@@ -168,10 +181,10 @@ public class FeatherKeys {
     }
 
     /*
-     * Функция writePrivateKey(file, privateKey){
-     * Записывает приватный ключ в файл
+     * Функция writeKey(file, privateKey){
+     * Записывает ключ в файл (public, private, secret)
      */
-    public static void writeKey(File file, Key key){
+    public static void writeKey(File file, Key key){ // Работает
         try {
             file.createNewFile();
             try (FileOutputStream fos = new FileOutputStream(file, false)) {
@@ -184,20 +197,13 @@ public class FeatherKeys {
     }
     /*
     * Функция generatePair()
-    * Генерирует пару ключей
+    * Генерирует пару ключей public и private
     * По умолчанию размер - 512 бит
      */
-    public static KeyPair generatePair(){
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-            generator.initialize(512);
-            return generator.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Could not generate pair");
-        }
+    public static KeyPair generatePair(){ // Работает
+        return generatePair(512);
     }
-    public static KeyPair generatePair(int keysize){
+    public static KeyPair generatePair(int keysize){ // Работает
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(keysize);
