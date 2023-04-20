@@ -1,8 +1,16 @@
 package pkg;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.*;
 import java.sql.*;
@@ -14,13 +22,14 @@ public class Server {
     private static BufferedReader in;
     private static BufferedWriter out;
 
-    private static PrivateKey privateKey;
-    private static PublicKey publicKey;
+    private static PrivateKey serverPrivateKey;
+    private static PublicKey serverPublicKey;
 
     public static final String IP = "84.246.85.148";
     public static final int PORT = 65231;
     public static final String publicKeyFileAddress = "serverkey.pub";
     public static final String privateKeyFileAddress = "serverkey";
+    private static Statement st;
 
     public static void main(String[] args) {
         ensureKeys();
@@ -33,8 +42,7 @@ public class Server {
                     clientSocket = server.accept();
                     out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
                     in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                    String command = decipher(in.readLine());
-                    if (command.equals("sTop")) return;
+                    String command = decode(in.readLine());
                     System.out.printf("Received command: `%s` [%s]\n", command, new Date());
                     String answer = processCommand(command);
                     out.write(answer);
@@ -48,9 +56,6 @@ public class Server {
                 System.out.printf("Server closed [%s]\n", new Date());
                 server.close();
             }
-        } catch (ClassNotFoundException e){
-            e.printStackTrace();
-            System.out.printf("ClassNotFoundException: %s [%s]\n", e.getMessage(), new Date());
         } catch (IOException e) {
             e.printStackTrace();
             System.out.printf("IOException: %s [%s]\n", e.getMessage(), new Date());
@@ -58,77 +63,222 @@ public class Server {
         System.out.println("Program stopped");
     }
 
-    private static String decipher(String str) throws IOException, ClassNotFoundException {
-        return str;
+    private static String decode(String str){
+        if(str.charAt(0)=='_')
+            return str;
+        byte[] deBase64 = Base64.getDecoder().decode(str);
+        byte[] decrypt = FeatherKeys.cipher(serverPrivateKey, FeatherKeys.DECRYPT, deBase64);
+        return new String(decrypt, StandardCharsets.UTF_8);
     }
 
     private static void ensureKeys() {
         File pubKeyFile = new File(publicKeyFileAddress);
         File privKeyFile = new File(privateKeyFileAddress);
         if(pubKeyFile.exists() && privKeyFile.exists()){
-            privateKey = Rsa.readPrivateKey(privKeyFile);
-            publicKey = Rsa.readPublicKey(pubKeyFile);
+            serverPrivateKey = FeatherKeys.readPrivateKey(privKeyFile);
+            serverPublicKey = FeatherKeys.readPublicKey(pubKeyFile);
         }else {
-            KeyPair pair = Rsa.generatePair();
-            privateKey = pair.getPrivate();
-            publicKey = pair.getPublic();
-            Rsa.writePublicKey(pubKeyFile, publicKey);
-            Rsa.writePrivateKey(privKeyFile, privateKey);
+            KeyPair pair = FeatherKeys.generatePair();
+            serverPrivateKey = pair.getPrivate();
+            serverPublicKey = pair.getPublic();
+            FeatherKeys.writeKey(pubKeyFile, serverPublicKey);
+            FeatherKeys.writeKey(privKeyFile, serverPrivateKey);
+        }
+    }
+
+    private static String createJWT(String user){
+        Algorithm algorithm = Algorithm.HMAC512(serverPrivateKey.getEncoded());
+        String token = JWT.create()
+                .withIssuer("Feather Server")
+                .withExpiresAt(new Date(new Date().getTime()+15*60*1000))
+                .withClaim("usr", user)
+                .withIssuedAt(new Date())
+                .sign(algorithm);
+        return token;
+    }
+    private static DecodedJWT verifyJWT(String[] cmd, int ind) throws JWTVerificationException, SQLException {
+        StringJoiner sj = new StringJoiner("_");
+        try {
+            for (int i = ind; ; ++i)  sj.add(cmd[i]);
+        }catch(IndexOutOfBoundsException ignored){}
+        String token = sj.toString();
+        return verifyJWT(token);
+    }
+    private static DecodedJWT verifyJWT(String token) throws JWTVerificationException, SQLException {
+        Algorithm algorithm = Algorithm.HMAC512(serverPrivateKey.getEncoded());
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withIssuer("Feather Server")
+                .build();
+        try {
+            DecodedJWT jwt = verifier.verify(token);
+            String usr = jwt.getClaim("usr").asString();
+            String query = String.format("SELECT refresh_date FROM user WHERE username = \"%s\"", usr);
+            ResultSet rs = st.executeQuery(query);
+            if(!rs.next())
+                throw new JWTVerificationException("no refresh in db");
+            long refreshDate = rs.getLong("refresh_date");
+            System.out.println(jwt.getIssuedAt().getTime());
+            System.out.println(refreshDate);
+            if(jwt.getIssuedAt().before(new Date(refreshDate)))
+                throw new JWTVerificationException("jwt.getIssuedAt().before(new Date(refreshDate))");
+            return jwt;
+        }catch(JWTDecodeException e){
+            throw new JWTVerificationException("Unable to decode JWT");
         }
     }
 
     public static String processCommand(String command){
         Connection connection = null;
-        // artist, title, album, track_num, length, path - Структура таблицы
         try {
             connection = DriverManager.getConnection("jdbc:sqlite:__musicdb.db");
-            Statement st = connection.createStatement();
+            st = connection.createStatement();
             st.setQueryTimeout(30);
             String[] cmd = command.split("_"); // cmd[0] == "" всегда
             if (cmd.length == 1) return "Illegal command\n";
             StringTokenizer tokenizer = new StringTokenizer(command, "/");
             tokenizer.nextToken();
-            if(command.startsWith("_establish_")) {
-                return "Established\n";
-            }else if(command.equals("get_song_")){
-                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\") AND UPPER(title) = UPPER(\"%s\")", tokenizer.nextToken(), tokenizer.nextToken(), tokenizer.nextToken());
-                ResultSet rs = st.executeQuery(query);
-                return formSong(rs);
-            }else if(command.startsWith("_get_artist_")) {
-                String artist = tokenizer.nextToken();
-                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\")", artist);
-                ResultSet rs = st.executeQuery(query);
-                return formArtist(rs);
-            }else if(command.startsWith("_get_playlist") || command.startsWith("_get_album_")){
-                String artist = tokenizer.nextToken();
-                String album = tokenizer.nextToken();
-                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\")", artist, album);
-                ResultSet rs = st.executeQuery(query);
-                return formPlaylist(rs);
-            }else if(command.startsWith("_init_")){
-                ResultSet rs = st.executeQuery("SELECT * FROM song");
-                return formInit(rs);
-            }else if(command.startsWith("_set_")) {
-                return "Not implemented\n";
-            }else if(command.startsWith("_register_")) {
+            if (command.startsWith("_login_")) {
                 String login = tokenizer.nextToken();
-                String passwdHash = tokenizer.nextToken();
-                String query = String.format("SELECT login FROM users WHERE UPPER(login) = UPPER(\"%s\")", login);
+                String passwd = tokenizer.nextToken();
+                String query = String.format("SELECT password FROM user WHERE username = \"%s\"", login);
+                ResultSet rs = st.executeQuery(query);
+                if(!rs.next()){
+                    return "User does not exist\n";
+                }
+                if (BCrypt.verifyer().verify(passwd.toCharArray(), rs.getString("password").toCharArray()).verified){
+                    long date = new Date().getTime();
+                    st.executeUpdate(String.format("UPDATE user SET refresh_date = %d WHERE username = \"%s\"", date, login));
+                    Thread.sleep(1000);
+                    String jwt = createJWT(login);
+                    String refresh = createRefresh(jwt);
+                    query = String.format("UPDATE user SET refresh = \"%s\" WHERE username = \"%s\"", refresh, login);
+                    st.executeUpdate(query);
+                    return jwt + " " + refresh + "\n";
+                } else {
+                    return "Invalid password\n";
+                }
+            } else if (command.startsWith("_register_")) {
+                String login = tokenizer.nextToken();
+                String passwd = tokenizer.nextToken();
+                String passwdHash = BCrypt.withDefaults().hashToString(12, passwd.toCharArray());
+                String query = String.format("SELECT username FROM user WHERE UPPER(username) = UPPER(\"%s\")", login);
                 ResultSet rs = st.executeQuery(query);
                 if (rs.next()) {
                     return "Already registered\n";
                 } else {
-                    query = String.format("INSERT INTO users VALUES (\"%s\", \"%s\")", login, passwdHash);
+                    query = String.format("INSERT INTO user VALUES (\"%s\", \"%s\", \"\", \"\")", login, passwdHash);
                     st.execute(query);
                     return "Successfully registered\n";
                 }
-            }else if(command.startsWith("_login_")){
+            } else if (command.equals("_getKey_")) {
+                return new String(Base64.getEncoder().encode(serverPublicKey.getEncoded()), StandardCharsets.UTF_8) + "\n";
+            } else if(command.startsWith("_refresh_")){
+                String token = tokenizer.nextToken();
+                String refresh = tokenizer.nextToken();
+                DecodedJWT jwt = verifyJWT(token);
+                String login = jwt.getClaim("usr").asString();
+                String query = String.format("SELECT refresh FROM user WHERE username = \"%s\"", login);
+                ResultSet rs = st.executeQuery(query);
+                if(rs.next() && rs.getString("refresh").equals(refresh)){
+                    query = String.format("UPDATE user SET refresh_date = %d", new Date().getTime());
+                    st.executeUpdate(query);
+                    Thread.sleep(1000);
+                    String new_jwt = createJWT(login);
+                    String new_refresh = createRefresh(new_jwt);
+                    query = String.format("UPDATE user SET refresh = \"%s\" WHERE username = \"%s\"", new_refresh, login);
+                    st.executeUpdate(query);
+                    return new_jwt + " " + new_refresh + "\n";
+                }else{
+                    return "Refresh denied\n";
+                }
+            } else if (command.startsWith("_get_song_")) {
+                DecodedJWT jwt = verifyJWT(cmd, 4);
+                String findQuery = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\") AND UPPER(title) = UPPER(\"%s\")", tokenizer.nextToken(), tokenizer.nextToken(), tokenizer.nextToken());
+                ResultSet rs = st.executeQuery(findQuery);
+                if(rs.next()) {
+                    String path = rs.getString("path");
+                    String query = String.format("SELECT * " +
+                            "FROM (SELECT username, song.path FROM " +
+                            "(SELECT user.username, like.song_id FROM like LEFT  JOIN user " +
+                            "WHERE user.ROWID = like.user_id) LEFT JOIN song WHERE song_id=song.rowid) " +
+                            "WHERE username = \"%s\" AND path = \"%s\"", jwt.getClaim("usr").asString(), path);
+                    ResultSet liked = st.executeQuery(query);
+                    boolean songLiked = liked.next();
+                    rs = st.executeQuery(findQuery);
+                    if(songLiked)
+                        return formSong(rs, "true");
+                    else
+                        return formSong(rs, "false");
+                }else
+                    return "No such song\n";
+            } else if (command.startsWith("_get_artist_")) {
+                verifyJWT(cmd, 4);
+                String artist = tokenizer.nextToken();
+                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\")", artist);
+                ResultSet rs = st.executeQuery(query);
+                if(rs.next())
+                    return formArtist(rs);
+                else
+                    return "No such artist\n";
+            } else if (command.startsWith("_get_playlist") || command.startsWith("_get_album_")) {
+                verifyJWT(cmd, 4);
+                String artist = tokenizer.nextToken();
+                String album = tokenizer.nextToken();
+                String query = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\")", artist, album);
+                ResultSet rs = st.executeQuery(query);
+                if(rs.next())
+                    return formPlaylist(rs);
+                else
+                    return "No such album\n";
+            } else if (command.startsWith("_get_likes_")) {
+                DecodedJWT jwt = verifyJWT(cmd, 3);
+                String username = jwt.getClaim("usr").asString();
+                String query = String.format("SELECT * FROM song " +
+                        "WHERE ROWID in (SELECT song_id FROM like WHERE user_id = " +
+                        "(SELECT user.ROWID FROM user WHERE username = \"%s\"))", username);
+                ResultSet rs = st.executeQuery(query);
+                if(rs.next())
+                    return formLikes(rs);
+                else
+                    return "Empty playlist\n";
+            } else if (command.startsWith("_init_")) {
+                verifyJWT(cmd, 2);
+                ResultSet rs = st.executeQuery("SELECT * FROM song");
+                return formInit(rs);
+            } else if(command.startsWith("_like_")){
+                DecodedJWT jwt = verifyJWT(cmd, 3);
+                String query = String.format("SELECT path FROM song WHERE UPPER(path) = UPPER(\"%s\")", cmd[2].substring(1, cmd[2].length()-1));
+                ResultSet rs = st.executeQuery(query);
+                if(!rs.next())
+                    return "No such song\n";
+                String path = rs.getString("path");
+                query = String.format("SELECT * " +
+                        "FROM (SELECT username, song.path FROM " +
+                        "(SELECT user.username, like.song_id FROM like LEFT  JOIN user " +
+                        "WHERE user.ROWID = like.user_id) LEFT JOIN song WHERE song_id=song.rowid) " +
+                        "WHERE username = \"%s\" AND path = \"%s\"", jwt.getClaim("usr").asString(), path);
+                rs = st.executeQuery(query);
+                if(!rs.next()){
+                    query = String.format("INSERT INTO like " +
+                            "VALUES((SELECT ROWID FROM user WHERE username = \"%s\"), " +
+                            "(SELECT ROWID FROM song WHERE path = \"%s\"))", jwt.getClaim("usr").asString(), path);
+                    st.executeUpdate(query);
+                    return "Success\n";
+                }else
+                    return "Like already exists\n";
 
-            }else
-                return "Not implemented\n";
+            } else
+                return "No such command\n";
+        }catch (JWTVerificationException e){
+            e.printStackTrace();
+            return "Auth error\n";
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.printf("SQLException: %s [%s]%n", e.getMessage(), new Date());
+            return "SQL error\n";
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
         } finally {
             try {
                 if (connection != null) connection.close();
@@ -137,10 +287,21 @@ public class Server {
                 System.out.printf("SQLException: %s [%s]%n", e.getMessage(), new Date());
             }
         }
-        return "Illegal command\n";
     }
 
-    private static String formSong(ResultSet rs) throws SQLException {
+    private static String createRefresh(String jwt) {
+        StringBuilder refresh = new StringBuilder(10);
+        Random rnd = new Random();
+        for(int i=0;i<10;++i)
+            refresh.append(jwt.charAt(rnd.nextInt(jwt.length())));
+        return refresh.toString();
+    }
+
+    private static String formLikes(ResultSet rs) throws SQLException{
+        return formPlaylist(rs);
+    }
+
+    private static String formSong(ResultSet rs, String liked) throws SQLException {
         StringBuilder result = new StringBuilder(500);
         result.append("{\"name\": \"").append(rs.getString("title"))
                 .append("\", \"artist\": \"").append(rs.getString("artist"))
@@ -155,7 +316,9 @@ public class Server {
 
         result.append(", \"url\": \"http://").append(IP).append("/Music/")
                 .append(rs.getString("path"))
-                .append(".mp3\"}\n");
+                .append(".mp3\"");
+
+        result.append(", \"liked\": ").append(liked).append("}\n");
         return result.toString();
     }
 
@@ -188,7 +351,6 @@ public class Server {
         String album = rs.getString("album");
         result.append("{\"songs\": [");
         int length = 0;
-        rs.next();
         while (true) {
             result.append("{\"artist\": \"").append(rs.getString("artist")).append("\", \"title\": \"").append(rs.getString("title")).append("\", \"image\": \"http://").append(IP).append("/Music/").append(artist).append("/").append(album).append("/COVER_").append(album).append(".jpg\"}");
             artists.add(rs.getString("artist"));

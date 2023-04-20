@@ -52,11 +52,29 @@ if len(c.fetchall()) == 0:
     album text,
     track_num integer,
     length integer,
-    path text
+    path text PRIMARY KEY
     )""")
 else:
     c.execute("DELETE FROM song")
 
+c.execute("SELECT name FROM sqlite_master WHERE name='user'")
+if len(c.fetchall()) == 0:
+    c.execute("""CREATE TABLE user (
+    username text PRIMARY KEY,
+    password text,
+    refresh text,
+    refresh_date integer
+    )""")
+
+c.execute("SELECT name FROM sqlite_master WHERE name='like'")
+if len(c.fetchall()) == 0:
+    c.execute("""CREATE TABLE like
+                 (
+                     user_id integer,
+                     song_id integer,
+                     FOREIGN KEY (user_id) REFERENCES user (ROWID),
+                     FOREIGN KEY (song_id) REFERENCES song (ROWID)
+                 )""")
 
 strange = []
 covers = []  # Сохранить пути к обложкам и обработать их потом
