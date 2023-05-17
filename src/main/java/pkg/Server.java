@@ -7,6 +7,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+
+import javax.crypto.BadPaddingException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -96,6 +98,8 @@ public class Server {
                 .sign(algorithm);
         return token;
     }
+
+
     private static DecodedJWT verifyJWT(String[] cmd, int ind) throws JWTVerificationException, SQLException {
         StringJoiner sj = new StringJoiner("_");
         try {
@@ -117,8 +121,8 @@ public class Server {
             if(!rs.next())
                 throw new JWTVerificationException("no refresh in db");
             long refreshDate = rs.getLong("refresh_date");
-            System.out.println(jwt.getIssuedAt().getTime());
-            System.out.println(refreshDate);
+            System.out.println(new Date(jwt.getIssuedAt().getTime()));
+            System.out.println(new Date(refreshDate));
             if(jwt.getIssuedAt().before(new Date(refreshDate)))
                 throw new JWTVerificationException("jwt.getIssuedAt().before(new Date(refreshDate))");
             return jwt;
@@ -134,7 +138,7 @@ public class Server {
             st = connection.createStatement();
             st.setQueryTimeout(30);
             String[] cmd = command.split("_"); // cmd[0] == "" всегда
-            if (cmd.length == 1) return "Illegal command\n";
+            if (cmd.length <= 1) return "BadArgs\n";
             StringTokenizer tokenizer = new StringTokenizer(command, "/");
             tokenizer.nextToken();
             if (command.startsWith("_login_")) {
@@ -143,7 +147,8 @@ public class Server {
                 String query = String.format("SELECT password FROM user WHERE username = \"%s\"", login);
                 ResultSet rs = st.executeQuery(query);
                 if(!rs.next()){
-                    return "User does not exist\n";
+//                    return "User does not exist\n";
+                    return "BadArgs\n";
                 }
                 if (BCrypt.verifyer().verify(passwd.toCharArray(), rs.getString("password").toCharArray()).verified){
                     long date = new Date().getTime();
@@ -155,7 +160,8 @@ public class Server {
                     st.executeUpdate(query);
                     return jwt + " " + refresh + "\n";
                 } else {
-                    return "Invalid password\n";
+//                    return "Invalid password\n";
+                    return "BadArgs\n";
                 }
             } else if (command.startsWith("_register_")) {
                 String login = tokenizer.nextToken();
@@ -163,13 +169,11 @@ public class Server {
                 String passwdHash = BCrypt.withDefaults().hashToString(12, passwd.toCharArray());
                 String query = String.format("SELECT username FROM user WHERE UPPER(username) = UPPER(\"%s\")", login);
                 ResultSet rs = st.executeQuery(query);
-                if (rs.next()) {
-                    return "Already registered\n";
-                } else {
+                if (!rs.next()){
                     query = String.format("INSERT INTO user VALUES (\"%s\", \"%s\", \"\", \"\")", login, passwdHash);
                     st.execute(query);
-                    return "Successfully registered\n";
                 }
+                return "Success\n";
             } else if (command.equals("_getKey_")) {
                 return new String(Base64.getEncoder().encode(serverPublicKey.getEncoded()), StandardCharsets.UTF_8) + "\n";
             } else if(command.startsWith("_refresh_")){
@@ -189,7 +193,8 @@ public class Server {
                     st.executeUpdate(query);
                     return new_jwt + " " + new_refresh + "\n";
                 }else{
-                    return "Refresh denied\n";
+//                    return "Refresh denied\n";
+                    return "BadArgs\n";
                 }
             } else if (command.startsWith("_get_song_")) {
                 DecodedJWT jwt = verifyJWT(cmd, 4);
@@ -210,7 +215,8 @@ public class Server {
                     else
                         return formSong(rs, "false");
                 }else
-                    return "No such song\n";
+//                    return "No such song\n";
+                    return "BadArgs\n";
             } else if (command.startsWith("_get_artist_")) {
                 verifyJWT(cmd, 4);
                 String artist = tokenizer.nextToken();
@@ -219,7 +225,8 @@ public class Server {
                 if(rs.next())
                     return formArtist(rs);
                 else
-                    return "No such artist\n";
+//                    return "No such artist\n";
+                    return "BadArgs\n";
             } else if (command.startsWith("_get_playlist") || command.startsWith("_get_album_")) {
                 verifyJWT(cmd, 4);
                 String artist = tokenizer.nextToken();
@@ -229,7 +236,8 @@ public class Server {
                 if(rs.next())
                     return formPlaylist(rs);
                 else
-                    return "No such album\n";
+//                    return "No such album\n";
+                    return "BadArgs\n";
             } else if (command.startsWith("_get_likes_")) {
                 DecodedJWT jwt = verifyJWT(cmd, 3);
                 String username = jwt.getClaim("usr").asString();
@@ -250,7 +258,8 @@ public class Server {
                 String query = String.format("SELECT path FROM song WHERE UPPER(path) = UPPER(\"%s\")", cmd[2].substring(1, cmd[2].length()-1));
                 ResultSet rs = st.executeQuery(query);
                 if(!rs.next())
-                    return "No such song\n";
+//                    return "No such song\n";
+                    return "BadArgs\n";
                 String path = rs.getString("path");
                 query = String.format("SELECT * " +
                         "FROM (SELECT username, song.path FROM " +
@@ -263,10 +272,18 @@ public class Server {
                             "VALUES((SELECT ROWID FROM user WHERE username = \"%s\"), " +
                             "(SELECT ROWID FROM song WHERE path = \"%s\"))", jwt.getClaim("usr").asString(), path);
                     st.executeUpdate(query);
-                    return "Success\n";
-                }else
-                    return "Like already exists\n";
-
+                }else {
+                    query = String.format("DELETE FROM like WHERE " +
+                                    "song_id = (SELECT rowid FROM song WHERE path = \"%s\") AND user_id = (SELECT rowid FROM user WHERE username = \"%s\")",
+                            path,
+                            jwt.getClaim("usr").asString()
+                            );
+                    System.out.println(jwt.getClaim("usr"));
+                    System.out.println(query);
+                    st.executeUpdate(query);
+//                    return "Like already exists\n";
+                }
+                return "Success\n";
             } else
                 return "No such command\n";
         }catch (JWTVerificationException e){
@@ -276,9 +293,9 @@ public class Server {
             e.printStackTrace();
             System.out.printf("SQLException: %s [%s]%n", e.getMessage(), new Date());
             return "SQL error\n";
-        } catch (InterruptedException e) {
+        } catch(InterruptedException e){
             e.printStackTrace();
-            throw new RuntimeException(e);
+            return "Interrupted exception\n";
         } finally {
             try {
                 if (connection != null) connection.close();

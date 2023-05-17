@@ -12,8 +12,16 @@ public class Test {
     static PublicKey serverPubKey;
     public static void main(String[] args) throws IOException{
 
+        for(String s : args)
+            System.out.println(s);
+        String host;
+        if(args.length == 0)
+            host = "http://84.246.85.148";
+        else
+            host = args[0];
+
         // Получить публичный ключ сервера
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_getKey_");
@@ -25,7 +33,7 @@ public class Test {
         System.out.println();
 
         // Зарегистрировать admin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_register_/admin/adminpwd/_");
@@ -39,7 +47,7 @@ public class Test {
 
 
         // Залогинить admin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_login_/admin/adminpwd/_");
@@ -55,7 +63,7 @@ public class Test {
 
 
         // Получить Automatic как admin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_song_/Amaranthe/Amaranthe/Automatic/_" + token);
@@ -68,7 +76,7 @@ public class Test {
 
 
         // Получить Automatic c невалидным JWT
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_song_/Amaranthe/Amaranthe/Automatic/_A.B.C");
@@ -81,7 +89,7 @@ public class Test {
 
 
         // Получить лайки как admin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_likes_" + token);
@@ -95,7 +103,7 @@ public class Test {
 
 
         // Получить инит как admin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_init_" + token);
@@ -108,7 +116,7 @@ public class Test {
 
 
         //  Зарегистрировать newestLogin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_register_/newestLogin/newsetPassword/_");
@@ -122,7 +130,7 @@ public class Test {
 
 
         // Залогинить newestLogin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_login_/newestLogin/newsetPassword/_");
@@ -138,7 +146,7 @@ public class Test {
 
 
         // Лайкнуть Automatic как newestLogin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_like_/Amaranthe/Amaranthe/Automatic/_" + token);
@@ -151,7 +159,7 @@ public class Test {
         System.out.println();
 
 
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_like_/Amaranthe/Amaranthe/Call out my name/_" + token);
@@ -165,7 +173,7 @@ public class Test {
 
 
         // Получить лайки как newestLogin
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_likes_" + token);
@@ -179,7 +187,7 @@ public class Test {
 
 
         // Залогинить несуществующего пользователя
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_login_/nonexist/adminpwd/_");
@@ -196,7 +204,7 @@ public class Test {
 
         // Получить новые JWT для admin
         // тем самым обесценив сущестующий токен
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String requset = String.format("_refresh_/%s/%s/_\n", token, refresh);
@@ -210,9 +218,12 @@ public class Test {
             System.out.printf("new token: %s\nnew refresh: %s\n", token, refresh);
         }
         System.out.println();
+//        try{
+//            Thread.sleep(20000);
+//        }catch (InterruptedException ignored){}
 
         // Попробовать снова
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String requset = String.format("_refresh_/%s/%s/_\n", oldToken, refresh);
@@ -224,9 +235,12 @@ public class Test {
         }
         System.out.println();
 
+//        try{
+//            Thread.sleep(10000);
+//        }catch (InterruptedException ignored){}
 
         // Получить Automatic как newestLogin с недействительным JWT
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_song_/Amaranthe/Amaranthe/Automatic/_" + oldToken);
@@ -238,7 +252,7 @@ public class Test {
         System.out.println();
 
         // Получить Automatic как newestLogin с действительным JWT
-        try (Socket socket = new Socket("http://84.246.85.148", Server.PORT)) {
+        try (Socket socket = new Socket(host, Server.PORT)) {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("_get_song_/Amaranthe/Amaranthe/Automatic/_" + token);
