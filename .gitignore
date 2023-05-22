@@ -1,14 +1,45 @@
+# IntelliJ IDEA
+.idea/
+
+# Gradle
+.gradle/
+build/
+
+# Compiled class files
 *.class
 
-bin/
-gen/
+# Log files
+*.log
 
-.gradle
+# IntelliJ project files
+*.iml
+*.ipr
+*.iws
 
-local.properties
+# Maven generated files and folders
+target/
 
-.idea
+# Eclipse project files
+.classpath
+.project
+.settings/
 
-build
+# macOS specific files
+.DS_Store
 
-FeatherAPI.odt
+# Windows thumbnail cache files
+Thumbs.db
+
+# Gradle wrapper files
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+
+# Generated artifacts
+artifacts/
+
+# Gradle cache
+.caches/
+
+# Local documentation
+*.odt
+*.docx
