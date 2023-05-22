@@ -2,7 +2,6 @@ package com.app.feather
 
 import android.content.Context
 import android.util.Log
-import com.auth0.android.jwt.JWT
 import com.feather.FeatherAPI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,10 +27,6 @@ class APIManager(val context: Context?) {
 
     fun getTokens() = arrayOf(FeatherAPI.getInstance().tokens.split(' '))
 
-    private fun isAccessExpired(): Boolean {
-        val accessToken = JWT(getAccessToken())
-        return accessToken.isExpired(30)
-    }
     private fun getAccessToken() = FeatherAPI.getInstance().tokens[0] as String
 
     fun signIn(login: String, password: String) {

@@ -4,7 +4,7 @@ import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
 
-class AccountsManager(context: Context?) {
+class AccountsManager(private val context: Context?) {
     private val accountManager = AccountManager.get(context)
     private val accountType = context?.getString(R.string.accountType)
 
@@ -34,9 +34,5 @@ class AccountsManager(context: Context?) {
                 break
             }
         }
-    }
-
-    fun saveTokens(accessToken: String, refreshToken: String) {
-
     }
 }
