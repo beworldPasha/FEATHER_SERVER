@@ -1,0 +1,14 @@
+*.class
+
+bin/
+gen/
+
+.gradle
+
+local.properties
+
+.idea
+
+build
+
+FeatherAPI.odt
