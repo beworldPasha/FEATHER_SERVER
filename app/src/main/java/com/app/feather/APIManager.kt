@@ -27,7 +27,7 @@ class APIManager(val context: Context?) {
 
     fun getTokens() = arrayOf(FeatherAPI.getInstance().tokens.split(' '))
 
-    private fun getAccessToken() = FeatherAPI.getInstance().tokens[0] as String
+    fun getAccessToken() = FeatherAPI.getInstance().tokens[0] as String
 
     fun signIn(login: String, password: String) {
         coroutineScope.launch {

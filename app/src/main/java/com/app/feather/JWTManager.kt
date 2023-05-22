@@ -7,4 +7,6 @@ class JWTManager {
         val accessToken = JWT(accessToken)
         return accessToken.isExpired(30)
     }
+
+    fun getEmail(accessToken: String) = JWT(accessToken).getClaim("name").asString()!!
 }

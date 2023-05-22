@@ -6,8 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val manager = APIManager(this)
-        manager.isAccessExpired()
+
+        val manager = JWTManager()
+        manager.getEmail("")
         //startActivity(Intent(this, AuthorizationActivity::class.java))
     }
 
