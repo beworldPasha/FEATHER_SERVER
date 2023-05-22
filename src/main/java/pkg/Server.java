@@ -147,9 +147,7 @@ public class Server {
                 String query = String.format("SELECT password FROM user WHERE username = \"%s\"", login);
                 ResultSet rs = st.executeQuery(query);
                 if(!rs.next()){
-                    System.out.println("E: User does not exist");
-//                    return "User does not exist\n";
-                    return "BadArgs\n";
+                    return "User does not exist\n";
                 }
                 if (BCrypt.verifyer().verify(passwd.toCharArray(), rs.getString("password").toCharArray()).verified){
                     long date = new Date().getTime();
@@ -161,9 +159,7 @@ public class Server {
                     st.executeUpdate(query);
                     return jwt + " " + refresh + "\n";
                 } else {
-                    System.out.println("E: Invalid password");
-//                    return "Invalid password\n";
-                    return "BadArgs\n";
+                    return "Invalid password\n";
                 }
             } else if (command.startsWith("_register_")) {
                 String login = tokenizer.nextToken();
@@ -174,8 +170,8 @@ public class Server {
                 if (!rs.next()){
                     query = String.format("INSERT INTO user VALUES (\"%s\", \"%s\", \"\", \"\")", login, passwdHash);
                     st.execute(query);
-                }
-                return "Success\n";
+                    return "Successfully registered\n";
+                } else return "Already registered\n";
             } else if (command.equals("_getKey_")) {
                 return new String(Base64.getEncoder().encode(serverPublicKey.getEncoded()), StandardCharsets.UTF_8) + "\n";
             } else if(command.startsWith("_refresh_")){
