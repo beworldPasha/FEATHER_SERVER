@@ -1,0 +1,30 @@
+<resources>
+    <!--Приложение-->
+    <string name="app_name">Feather</string>
+
+    <!--Авторизация-->
+    <string name="signInHeader">Вход</string>
+    <string name="signUpHeader">Регистрация</string>
+
+    <string name="emailHeader">Почта</string>
+    <string name="passwordHeader">Пароль</string>
+    <string name="rememberMeHeader">Запомнить меня</string>
+    <string name="repeatPasswordHeader">Повторите пароль</string>
+    <string name="privacyPolicy">Ознакомлен(-а) с Политикой Конфиденциальности</string>
+
+    <string name="signInButtonText">Войти</string>
+    <string name="signUpButtonText">Зарегистрироваться</string>
+
+    <string name="emailError">Это не Email</string>
+    <string name="errorPolicy">Нужно принять политику</string>
+    <string name="emptyEditorError">Поля должны быть заполнены</string>
+    <string name="passwordLengthError">Нужно от 7 до 20 символов</string>
+    <string name="repeatedPasswordError">Пароли не совпадают</string>
+
+    <string name="saveCredentialsQuestion">Сохраним данные для входа?</string>
+
+    <string name="choosingAccountsHeader">Аккаунты для входа</string>
+
+    <!--AccountManagerData-->
+    <string name="accountType">com.app.feather.account</string>
+</resources>
