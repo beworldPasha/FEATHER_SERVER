@@ -66,7 +66,7 @@ public class FeatherKeys {
 
     public static byte[] cipher(Key key, int way, byte[] msg){
         try {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(way, key);
             return cipher.doFinal(msg);
         }catch(Exception e){
@@ -92,7 +92,7 @@ public class FeatherKeys {
      */
     public static PublicKey readPublicKey(byte[] bytes){ // Работает
         try{
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA/ECB/PKCS1Padding");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(bytes);
             return keyFactory.generatePublic(publicKeySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -138,7 +138,7 @@ public class FeatherKeys {
     }
     public static KeyPair generatePair(int keysize){ // Работает
         try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA/ECB/PKCS1Padding");
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(keysize);
             return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
@@ -157,7 +157,7 @@ public class FeatherKeys {
     }
     public static PrivateKey readPrivateKey(byte[] privKeyBytes){ // Работает
         try {
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA/ECB/PKCS1Padding");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privKeyBytes);
             return keyFactory.generatePrivate(privateKeySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
