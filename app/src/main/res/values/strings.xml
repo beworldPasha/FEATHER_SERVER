@@ -27,4 +27,8 @@
 
     <!--AccountManagerData-->
     <string name="accountType">com.app.feather.account</string>
+
+    <!--SharedPreferences-->
+    <string name="userPreference">com.app.feather.currentUser</string>
+    <string name="settings">com.app.feather.settings</string>
 </resources>
