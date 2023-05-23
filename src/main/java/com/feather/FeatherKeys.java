@@ -25,7 +25,7 @@ class FeatherKeys {
 
     private static byte[] cipher(Key key, int way, byte[] msg) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
             cipher.init(way, key);
             return cipher.doFinal(msg);
         } catch (Exception e) {
