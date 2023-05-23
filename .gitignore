@@ -10,3 +10,4 @@ __musicdb.db
 sql.py
 serverkey
 serverkey.pub
+ansServer/*.jar
