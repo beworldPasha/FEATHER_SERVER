@@ -25,7 +25,7 @@ class FeatherKeys {
 
     private static byte[] cipher(Key key, int way, byte[] msg) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(way, key);
             return cipher.doFinal(msg);
         } catch (Exception e) {
@@ -45,7 +45,7 @@ class FeatherKeys {
 
     private static PublicKey readPublicKey(byte[] bytes) { // Работает
         try {
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA/ECB/PKCS1Padding");
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(bytes);
             return keyFactory.generatePublic(publicKeySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
