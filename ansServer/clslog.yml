@@ -1,0 +1,9 @@
+---
+- name: Clear Logs
+  hosts: featherserver
+  remote_user: maxx
+  vars:
+    ansible_port: 34
+  tasks:
+    - name: Clear logs
+      shell: /home/maxx/clslog

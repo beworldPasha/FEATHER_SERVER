@@ -1,0 +1,20 @@
+---
+- name: Upload Jar to Server
+  hosts: featherserver
+  remote_user: maxx
+  vars:
+    ansible_port: 34
+  tasks:
+    - name: Delete old file
+      shell: rm /home/maxx/FEATHER_SERVER-all.jar
+    - name: Copy .jar
+      copy:
+        src: FEATHER_SERVER-all.jar
+        dest: /home/maxx/FEATHER_SERVER-all.jar
+        owner: maxx
+        group: maxx
+        mode: '0644'
+    - name: runserver
+      shell: /home/maxx/runserver ansible
+      async: 10
+      poll: 0
