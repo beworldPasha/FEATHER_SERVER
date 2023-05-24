@@ -5,6 +5,7 @@ import android.content.Context
 
 class SharedPreferencesManager(private val activity: Activity?) {
     private val userKey = "current_user"
+    private val rememberKey = "remember"
     private val userPreference = activity?.getSharedPreferences(
         activity.getString(R.string.userPreference), Context.MODE_PRIVATE)
 
@@ -17,9 +18,26 @@ class SharedPreferencesManager(private val activity: Activity?) {
         } ?: return
     }
 
+    fun saveRememberState(rememberState: Boolean) {
+        with(userPreference?.edit() ?: return) {
+            putBoolean(rememberKey, rememberState)
+            apply()
+        }
+    }
+
+    fun isRemembered(): Boolean? {
+        return with(userPreference ?: return null) {
+            getBoolean(rememberKey, false)
+        }
+    }
+
     fun getUserLogin(): String? {
         return with(userPreference ?: return null) {
             getString(userKey, null)
         }
+    }
+
+    fun removeUserPreference() {
+
     }
 }
