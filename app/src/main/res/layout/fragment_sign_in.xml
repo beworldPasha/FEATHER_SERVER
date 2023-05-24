@@ -40,24 +40,23 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!--com.google.android.material.checkbox.MaterialCheckBox
+    <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/rememberCheckBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/rememberMeHeader"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" /-->
+        app:layout_constraintTop_toBottomOf="@id/passwordLayout" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/signInButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:text="@string/signInButtonText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" />
+        app:layout_constraintTop_toBottomOf="@id/rememberCheckBox" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
