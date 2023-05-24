@@ -39,6 +39,17 @@ class AccountsManager(private val context: Context?) {
         }
     }
 
+    fun getAccessToken(login: String?): String? {
+        val accounts = accountManager.getAccountsByType(accountType)
+        for (account in accounts) {
+            if (login?.let { account.name == it } == true) {
+                return accountManager.getAuthToken(
+                    account, accessTag, false, null, null) as String
+            }
+        }
+        return null
+    }
+
 
     fun saveTokens() {
         val apiManager = APIManager(context)
