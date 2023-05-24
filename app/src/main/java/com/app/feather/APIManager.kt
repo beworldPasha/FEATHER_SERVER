@@ -32,7 +32,7 @@ class APIManager(val context: Context?) {
     fun signIn(login: String, password: String) {
         coroutineScope.launch {
             try {
-                val answer = FeatherAPI.getInstance().authorize(
+                FeatherAPI.getInstance().authorize(
                     FeatherAPI.getInstance().SIGN_IN_REQUEST,
                     login,
                     password
@@ -43,7 +43,7 @@ class APIManager(val context: Context?) {
         }
     }
 
-    private fun refreshTokens() {
+    fun refreshTokens() {
         coroutineScope.launch {
             try {
                 FeatherAPI.getInstance().refreshTokens()
