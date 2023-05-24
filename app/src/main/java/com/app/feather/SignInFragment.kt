@@ -2,6 +2,7 @@ package com.app.feather
 
 import android.app.AlertDialog
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -24,7 +25,7 @@ class SignInFragment : Fragment() {
         setupEmailValidation()
         setupPasswordValidation()
 
-        binding.signInButton.setOnClickListener { validateAndSignUp() }
+        binding.signInButton.setOnClickListener { validateAndSignIn() }
 
         return view
     }
@@ -34,7 +35,7 @@ class SignInFragment : Fragment() {
         showAccountSelectionDialog()
     }
 
-    private fun validateAndSignUp() {
+    private fun validateAndSignIn() {
         fun showError(layout: TextInputLayout, errorMessageRes: Int) {
             layout.errorIconDrawable = null
             layout.error = getString(errorMessageRes)
@@ -58,6 +59,14 @@ class SignInFragment : Fragment() {
             APIManager(context).signIn(
                 binding.emailEditor.text.toString(), binding.passwordEditor.text.toString()
             )
+
+            val preferenceManager = SharedPreferencesManager(activity)
+            with(preferenceManager) {
+                saveUserLogin(binding.passwordEditor.text.toString())
+                saveRememberState(binding.rememberCheckBox.isChecked)
+            }
+
+            startActivity(Intent(context, MainActivity::class.java))
         }
     }
 
