@@ -69,7 +69,7 @@ public class FeatherAPI {
             out.flush();
 
             String serverAnswer = in.readLine();
-            if (serverAnswer == REFRESH_DENIED)
+            if (serverAnswer.equals(REFRESH_DENIED))
                 throw badArgs;
 
             fetchTokens(serverAnswer);
@@ -93,7 +93,7 @@ public class FeatherAPI {
             out.flush();
 
             String serverAnswer = in.readLine();
-            if (serverAnswer == REFRESH_DENIED)
+            if (serverAnswer.equals(REFRESH_DENIED))
                 throw badArgs;
 
             fetchTokens(serverAnswer);
@@ -140,14 +140,15 @@ public class FeatherAPI {
             out.flush();
 
             String serverAnswer = in.readLine();
-            if (serverAnswer == SIGN_IN_EXIST_ERROR
-                    || serverAnswer == SIGN_IN_PASSWORD_ERROR || serverAnswer == SIGN_UP_ERROR) {
+            if (serverAnswer.equals(SIGN_IN_EXIST_ERROR)
+                    || serverAnswer.equals(SIGN_IN_PASSWORD_ERROR)
+                    || serverAnswer.equals(SIGN_UP_ERROR)) {
                 return serverAnswer;
             }
 
-            if (typeRequest == SIGN_IN_REQUEST) {
+            if (typeRequest.equals(SIGN_IN_REQUEST)) {
                 fetchTokens(serverAnswer);
-            } else if (typeRequest == SIGN_UP_REQUEST) {
+            } else if (typeRequest.equals(SIGN_UP_REQUEST)) {
                 return SIGN_UP_SUCCESS;
             } else throw badArgs;
         } catch (Exception exception) {
@@ -222,7 +223,7 @@ public class FeatherAPI {
             out.flush();
 
             String json = in.readLine();
-            if (json == badArgs.getMessage()) throw badArgs;
+            if (json.equals(badArgs.getMessage())) throw badArgs;
 
             Gson data = new Gson();
 
