@@ -126,7 +126,7 @@ public class FeatherAPI {
         refreshToken = tokens[1];
     }
 
-    public String authorize(String typeRequest, String login, String password) throws IOException {
+    public Boolean authorize(String typeRequest, String login, String password) throws IOException {
         if (serverKey == null) fetchServerKey();
         startSession();
 
@@ -135,6 +135,7 @@ public class FeatherAPI {
         String encryptRequest = new String(Base64.getEncoder().encode(bytes));
         encryptRequest += '\n';
 
+        boolean isSuccess = true;
         try {
             out.write(encryptRequest);
             out.flush();
@@ -143,23 +144,22 @@ public class FeatherAPI {
             if (serverAnswer.equals(SIGN_IN_EXIST_ERROR)
                     || serverAnswer.equals(SIGN_IN_PASSWORD_ERROR)
                     || serverAnswer.equals(SIGN_UP_ERROR)) {
-                return serverAnswer;
+                return false;
             }
 
             if (typeRequest.equals(SIGN_IN_REQUEST)) {
                 fetchTokens(serverAnswer);
-            } else if (typeRequest.equals(SIGN_UP_REQUEST)) {
-                return SIGN_UP_SUCCESS;
+                isSuccess = true;
             } else throw badArgs;
         } catch (Exception exception) {
+            isSuccess = false;
             if (exception == badArgs)
                 throw badArgs;
             throw networkException;
         } finally {
             closeSession();
+            return isSuccess;
         }
-
-        return ""; // Никогда не сработает
     }
 
     public String getAccessToken() {
