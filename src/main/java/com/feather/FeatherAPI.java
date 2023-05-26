@@ -53,7 +53,7 @@ public class FeatherAPI {
 
     public String getTokens() throws IOException {
         if (accessToken == null || refreshToken == null)
-            throw tokensError;
+            return null;
 
         return accessToken + " " + refreshToken;
     }
@@ -144,22 +144,19 @@ public class FeatherAPI {
             if (serverAnswer.equals(SIGN_IN_EXIST_ERROR)
                     || serverAnswer.equals(SIGN_IN_PASSWORD_ERROR)
                     || serverAnswer.equals(SIGN_UP_ERROR)) {
-                return false;
+                isSuccess = false;
             }
 
-            if (typeRequest.equals(SIGN_IN_REQUEST)) {
+            if (typeRequest.equals(SIGN_IN_REQUEST) && isSuccess) {
                 fetchTokens(serverAnswer);
-                isSuccess = true;
-            } else throw badArgs;
+            }
         } catch (Exception exception) {
             isSuccess = false;
-            if (exception == badArgs)
-                throw badArgs;
             throw networkException;
         } finally {
             closeSession();
-            return isSuccess;
         }
+        return isSuccess;
     }
 
     public String getAccessToken() {
