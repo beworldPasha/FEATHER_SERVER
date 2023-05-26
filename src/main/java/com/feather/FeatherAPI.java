@@ -120,7 +120,7 @@ public class FeatherAPI {
         }
     }
 
-    private void fetchTokens(String tokenAnswers) {
+    void fetchTokens(String tokenAnswers) {
         String[] tokens = tokenAnswers.split(" ");
         accessToken = tokens[0];
         refreshToken = tokens[1];
