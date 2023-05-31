@@ -35,34 +35,42 @@ public class Server {
 
     public static void main(String[] args) {
         ensureKeys();
-        try {
+        for(;;) {
             try {
-                server = new ServerSocket(PORT);
-                System.out.printf("Socket opened [%s]\n", new Date());
-                for (; ; ) {
-                    System.out.printf("! waiting for input ! [%s]\n", new Date());
-                    clientSocket = server.accept();
-                    out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-                    in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                    String command = decode(in.readLine());
-                    System.out.printf("Received command: `%s` [%s]\n", command, new Date());
-                    String answer = processCommand(command);
-                    out.write(answer);
-                    System.out.println("Sent to client: " + answer);
-                    out.flush();
+                try {
+                    server = new ServerSocket(PORT);
+                    System.out.printf("Socket opened [%s]\n", new Date());
+                    for (; ; ) {
+                        System.out.printf("! waiting for input ! [%s]\n", new Date());
+                        clientSocket = server.accept();
+                        out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+                        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                        String command = decode(in.readLine());
+                        System.out.printf("Received command: `%s` [%s]\n", command, new Date());
+                        String answer;
+                        try {
+                            answer = processCommand(command);
+                        }catch(Exception e){
+                            e.printStackTrace();
+                            answer = "Error\n";
+                        }
+                        out.write(answer);
+                        System.out.println("Sent to client: " + answer);
+                        out.flush();
+                    }
+                } finally {
+                    clientSocket.close();
+                    in.close();
+                    out.close();
+                    System.out.printf("Server closed [%s]\n", new Date());
+                    server.close();
                 }
-            } finally {
-                clientSocket.close();
-                in.close();
-                out.close();
-                System.out.printf("Server closed [%s]\n", new Date());
-                server.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.printf("IOException: %s [%s]\n", e.getMessage(), new Date());
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.printf("IOException: %s [%s]\n", e.getMessage(), new Date());
+            System.out.println("Program stopped");
         }
-        System.out.println("Program stopped");
     }
 
     private static String decode(String str){
@@ -177,12 +185,14 @@ public class Server {
             } else if(command.startsWith("_refresh_")){
                 String token = tokenizer.nextToken();
                 String refresh = tokenizer.nextToken();
-                DecodedJWT jwt = verifyJWT(token);
-                String login = jwt.getClaim("usr").asString();
-                String query = String.format("SELECT refresh FROM user WHERE username = \"%s\"", login);
+                String refreshToMatch = createRefresh(token);
+                if(!refreshToMatch.equals(refresh))
+                    return "BadArgs\n";
+                String query = String.format("SELECT username FROM user WHERE refresh = \"%s\"", refresh);
                 ResultSet rs = st.executeQuery(query);
-                if(rs.next() && rs.getString("refresh").equals(refresh)){
-                    query = String.format("UPDATE user SET refresh_date = %d", new Date().getTime());
+                if(rs.next()){
+                    String login = rs.getString("username");
+                    query = String.format("UPDATE user SET refresh_date = %d WHERE username = \"%s\"", new Date().getTime(), login);
                     st.executeUpdate(query);
                     Thread.sleep(1000);
                     String new_jwt = createJWT(login);
@@ -190,11 +200,9 @@ public class Server {
                     query = String.format("UPDATE user SET refresh = \"%s\" WHERE username = \"%s\"", new_refresh, login);
                     st.executeUpdate(query);
                     return new_jwt + " " + new_refresh + "\n";
-                }else{
-                    System.out.println("E: Refresh denied");
-//                    return "Refresh denied\n";
-                    return "BadArgs\n";
                 }
+                System.out.println("E: Refresh denied");
+                return "BadArgs\n";
             } else if (command.startsWith("_get_song_")) {
                 DecodedJWT jwt = verifyJWT(cmd, 4);
                 String findQuery = String.format("SELECT * FROM song WHERE UPPER(artist) = UPPER(\"%s\") AND UPPER(album) = UPPER(\"%s\") AND UPPER(title) = UPPER(\"%s\")", tokenizer.nextToken(), tokenizer.nextToken(), tokenizer.nextToken());
@@ -322,7 +330,10 @@ public class Server {
 
     private static String createRefresh(String jwt) {
         StringBuilder refresh = new StringBuilder(10);
-        Random rnd = new Random();
+        long seed = 0;
+        for(byte b : serverPrivateKey.getEncoded())
+            seed += b;
+        Random rnd = new Random(seed);
         for(int i=0;i<10;++i)
             refresh.append(jwt.charAt(rnd.nextInt(jwt.length())));
         return refresh.toString();
