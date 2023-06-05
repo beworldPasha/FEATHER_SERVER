@@ -65,9 +65,9 @@ public class Server {
                     System.out.printf("Server closed [%s]\n", new Date());
                     server.close();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
-                System.out.printf("IOException: %s [%s]\n", e.getMessage(), new Date());
+                System.out.printf("Exception: %s [%s]\n", e.getMessage(), new Date());
             }
             System.out.println("Program stopped");
         }
