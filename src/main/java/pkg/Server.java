@@ -59,11 +59,11 @@ public class Server {
                         out.flush();
                     }
                 } finally {
-                    clientSocket.close();
-                    in.close();
-                    out.close();
+                    if (clientSocket != null) clientSocket.close();
+                    if (in != null) in.close();
+                    if (out != null) out.close();
                     System.out.printf("Server closed [%s]\n", new Date());
-                    server.close();
+                    if (server != null) server.close();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
