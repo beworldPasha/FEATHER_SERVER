@@ -131,9 +131,20 @@ class SignUpFragment : Fragment() {
         if (isEmailValid && isPasswordValid && isPrivacyChecked) {
             APIManager(context).signUp(
                 binding.emailEditor.text.toString(), binding.passwordEditor.text.toString()
-            )
-            showSaveCredentialsSnackBar()
+            ) { isSuccessRegistered ->
+                if (isSuccessRegistered) showSaveCredentialsSnackBar()
+                else {
+                    binding.emailLayout.error = getString(R.string.signUpError)
+                    binding.passwordLayout.error = getString(R.string.signUpError)
+                }
+            }
         }
+    }
+
+    private fun showRegistrationErrorSnackBar() {
+        Snackbar.make(
+            binding.root, getString(R.string.signUpError), Snackbar.LENGTH_SHORT
+        ).show()
     }
 
     private fun showSaveCredentialsSnackBar() {

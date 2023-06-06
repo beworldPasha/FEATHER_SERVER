@@ -8,5 +8,5 @@ class JWTManager {
         return accessToken.isExpired(30)
     }
 
-    fun getEmail(accessToken: String) = JWT(accessToken).getClaim("name").asString()!!
+    fun getEmail(accessToken: String) = JWT(accessToken).getClaim("usr").asString()!!
 }

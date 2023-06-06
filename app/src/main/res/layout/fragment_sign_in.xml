@@ -7,6 +7,7 @@
     android:paddingHorizontal="16dp"
     tools:context=".SignInFragment">
     <com.google.android.material.textfield.TextInputLayout
+        app:errorEnabled="true"
         android:id="@+id/emailLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,7 +27,6 @@
         android:id="@+id/passwordLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/emailLayout">

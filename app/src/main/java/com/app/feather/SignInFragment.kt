@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.app.feather.databinding.FragmentSignInBinding
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputLayout
 
 class SignInFragment : Fragment() {
@@ -58,16 +59,40 @@ class SignInFragment : Fragment() {
         if (isEmailValid && isPasswordValid) {
             APIManager(context).signIn(
                 binding.emailEditor.text.toString(), binding.passwordEditor.text.toString()
+            ) { isSuccessSignIn ->
+                if (isSuccessSignIn) {
+                    showSaveCredentialsSnackBar()
+
+                    val preferenceManager = SharedPreferencesManager(activity)
+                    with(preferenceManager) {
+                        saveUserLogin(binding.emailEditor.text.toString())
+                        saveRememberState(binding.rememberCheckBox.isChecked)
+                    }
+                    AccountsManager(context).saveTokens(binding.emailEditor.text.toString())
+
+                    startActivity(Intent(context, MainActivity::class.java))
+                    activity?.finish()
+                } else {
+                    binding.emailLayout.error = getString(R.string.signInError)
+                    binding.passwordLayout.error = getString(R.string.signInError)
+                }
+            }
+        }
+    }
+
+    private fun showSaveCredentialsSnackBar() {
+        val saveCredentialsSnackBar =
+            Snackbar.make(
+                binding.root,
+                getString(R.string.saveCredentialsQuestion), Snackbar.LENGTH_LONG
             )
 
-            val preferenceManager = SharedPreferencesManager(activity)
-            with(preferenceManager) {
-                saveUserLogin(binding.passwordEditor.text.toString())
-                saveRememberState(binding.rememberCheckBox.isChecked)
-            }
-
-            startActivity(Intent(context, MainActivity::class.java))
+        saveCredentialsSnackBar.setAction("Да") {
+            val email = binding.emailEditor.text.toString()
+            val password = binding.passwordEditor.text.toString()
+            AccountsManager(context).addAccount(email, password)
         }
+        saveCredentialsSnackBar.show()
     }
 
     private fun showAccountSelectionDialog() {

@@ -10,33 +10,30 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
-
-
     }
 
     override fun onResume() {
         super.onResume()
         startSession()
-        //startActivity(Intent(this, AuthorizationActivity::class.java))
-    }
-
-    override fun onStop() {
-        super.onStop()
-        finish()
     }
 
     private fun startSession() {
         val preferenceManager = SharedPreferencesManager(this)
-        if (preferenceManager.isRemembered() == true) {
-            val accessToken = AccountsManager(applicationContext).
-            getAccessToken(preferenceManager.getUserLogin())
 
-            if (accessToken?.let { JWTManager().isAccessExpired(it) } == true) {
-                APIManager(applicationContext).refreshTokens()
+        if (preferenceManager.isRemembered()) {
+            val apiManager = APIManager(applicationContext)
+            apiManager.uploadTokens(
+                AccountsManager(applicationContext).getTokens(preferenceManager)
+            )
+            apiManager.refreshAndSaveTokens { isRefreshed ->
+                if (isRefreshed) {
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                } //TODO(): Сделать активити ошибки
             }
-            startActivity(Intent(this, MainActivity::class.java))
         } else {
             startActivity(Intent(this, AuthorizationActivity::class.java))
+            finish()
         }
     }
 }

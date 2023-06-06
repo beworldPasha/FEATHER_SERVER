@@ -21,6 +21,9 @@
     <string name="passwordLengthError">Нужно от 7 до 20 символов</string>
     <string name="repeatedPasswordError">Пароли не совпадают</string>
 
+    <string name="signUpError">Ошибка при регистрации</string>
+    <string name="signInError">Неверные почта или пароль</string>
+
     <string name="saveCredentialsQuestion">Сохраним данные для входа?</string>
 
     <string name="choosingAccountsHeader">Аккаунты для входа</string>
@@ -31,4 +34,12 @@
     <!--SharedPreferences-->
     <string name="userPreference">com.app.feather.currentUser</string>
     <string name="settings">com.app.feather.settings</string>
+
+    <!--Menu-->
+    <string name="mainMenuTitle">Главная</string>
+    <string name="podcastMenuTitle">Подкасты</string>
+    <string name="streamMenuTitle">Стриминг</string>
+    <string name="profileMenuTitile">Профиль</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

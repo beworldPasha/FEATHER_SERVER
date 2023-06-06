@@ -39,6 +39,8 @@ configurations {
 }
 
 dependencies {
+    //Picasso for images
+    implementation 'com.squareup.picasso:picasso:2.8'
 
     //Materials
     implementation 'com.google.android.material:material:1.9.0'
@@ -48,6 +50,13 @@ dependencies {
 
     //JWT Checker
     implementation("com.auth0.android:jwtdecode:2.0.2")
+
+    //Navigation Graph
+    implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
+    implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
+    implementation("androidx.navigation:navigation-dynamic-features-fragment:2.5.3")
+    androidTestImplementation("androidx.navigation:navigation-testing:2.5.3")
+
 
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.core:core-ktx:1.10.1'

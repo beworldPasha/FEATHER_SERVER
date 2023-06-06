@@ -3,6 +3,10 @@ package com.app.feather
 import android.accounts.Account
 import android.accounts.AccountManager
 import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AccountsManager(private val context: Context?) {
     private val accountManager = AccountManager.get(context)
@@ -20,55 +24,95 @@ class AccountsManager(private val context: Context?) {
         return keystoreManager.decryptPassword(encryptedPassword)
     }
 
-    fun addAccount(login: String, password: String) {
-        val account = Account(login, accountType)
+    fun addAccount(email: String, password: String?) {
         val keystoreManager = KeystoreManager()
-        accountManager.addAccountExplicitly(
-            account,
-            keystoreManager.encryptPassword(password), null
-        )
+
+        if (isAccountExist(email)) {
+            password?.let {
+                accountManager.setPassword(
+                    getAccount(email),
+                    keystoreManager.encryptPassword(password)
+                )
+            }
+            return
+        }
+        val account = Account(email, accountType)
+        password?.let {
+            accountManager.addAccountExplicitly(
+                account, keystoreManager.encryptPassword(password), null
+            )
+            return
+        }
+        accountManager.addAccountExplicitly(account, null, null)
     }
 
-    fun removeAccount(login: String, accountType: String) {
-        val accounts = accountManager.getAccountsByType(accountType)
-        for (account in accounts) {
-            if (account.name == login) {
-                accountManager.removeAccount(account, null, null)
-                break
+    private fun isAccountExist(email: String) = getAccount(email) != null
+
+    fun removeAccount(email: String) {
+        getAccount(email)?.let { accountManager.removeAccount(it, null, null) }
+    }
+
+    fun getAccessToken(email: String?, callback: (String?) -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            email?.let {
+                val account = getAccount(email)
+                val bundle = accountManager?.getAuthToken(
+                    account, accessTag, false, null, null
+                )?.result
+                withContext(Dispatchers.Main) {
+                    callback(bundle?.getString(accessTag, null))
+                }
+            }
+            withContext(Dispatchers.IO) {
+                callback(null)
             }
         }
     }
 
-    fun getAccessToken(login: String?): String? {
+    //TODO() Сохранение токенов в Main при повторном входе срабатывает до их обновления в
+    // SplashScreen, если вход Remember Me
+    fun saveTokens(email: String?) {
+        val apiManager = APIManager(context)
+        apiManager.getTokens()?.let { tokens ->
+            val account = getAccount(email ?: return)
+            if (account == null) {
+                addAccount(email, null)
+            }
+            with(getAccount(email)) {
+                accountManager.setAuthToken(this, accessTag, tokens[0])
+                accountManager.setAuthToken(this, refreshTag, tokens[1])
+            }
+        }
+    }
+
+    fun isTokensSaved(userPreferencesManager: SharedPreferencesManager) =
+        getTokens(userPreferencesManager) == null
+
+    fun removeTokens() {
+
+    }
+
+    private fun getAccount(email: String): Account? {
         val accounts = accountManager.getAccountsByType(accountType)
         for (account in accounts) {
-            if (login?.let { account.name == it } == true) {
-                return accountManager.getAuthToken(
-                    account, accessTag, false, null, null) as String
-            }
+            if (account.name == email) return account
         }
         return null
     }
 
+    fun getTokens(userPreferencesManager: SharedPreferencesManager): List<String>? {
+        userPreferencesManager.getUserLogin()?.let { email ->
+            getAccount(email)?.let {
+                val accessToken = accountManager.peekAuthToken(it, accessTag)
+                val refreshToken = accountManager.peekAuthToken(it, refreshTag)
 
-    fun saveTokens() {
-        val apiManager = APIManager(context)
-        val jwtManager = JWTManager()
-
-        val email = jwtManager.getEmail(apiManager.getAccessToken())
-        val tokens = apiManager.getTokens()
-
-        val accounts = accountManager.getAccountsByType(accountType)
-        for (account in accounts) {
-            if (account.name == email) {
-                accountManager.setAuthToken(account, accessTag, tokens[0] as String)
-                accountManager.setAuthToken(account, refreshTag, tokens[1] as String)
-                break
+                accessToken?.let { access ->
+                    refreshToken?.let { refresh ->
+                        return listOf(access, refresh)
+                    }
+                }
             }
         }
-    }
-
-    fun getTokens() {
-
+        return null
     }
 }

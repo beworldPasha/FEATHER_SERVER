@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/feather_logo"
+        android:title="@string/mainMenuTitle" />
+    <item
+        android:id="@+id/podcastFragment"
+        android:icon="@drawable/feather_logo"
+        android:title="@string/podcastMenuTitle" />
+    <item
+        android:id="@+id/streamFragment"
+        android:icon="@drawable/feather_logo"
+        android:title="@string/streamMenuTitle" />
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/feather_logo"
+        android:title="@string/profileMenuTitile" />
+
+</menu>

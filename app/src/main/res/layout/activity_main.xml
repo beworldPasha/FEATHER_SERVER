@@ -4,58 +4,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="16dp"
     tools:context=".MainActivity">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/emailLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/email_editor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/emailHeader"
-            android:inputType="textEmailAddress" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/passwordLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/emailLayout">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/passwordEditor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/passwordHeader"
-            android:inputType="textPassword" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!--com.google.android.material.checkbox.MaterialCheckBox
-        android:id="@+id/rememberCheckBox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/rememberMeHeader"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" /-->
-
-    <com.google.android.material.button.MaterialButton
+    <!--com.google.android.material.button.MaterialButton
         android:id="@+id/signInButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/signInButtonText"
+        android:text="Выйти"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" />
+        app:layout_constraintTop_toTopOf="parent" /-->
 
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/applicationNavigationFragmentContainerView"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/navigation_app_graph" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_navigation_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

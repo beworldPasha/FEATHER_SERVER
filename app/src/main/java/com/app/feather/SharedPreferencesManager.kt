@@ -3,7 +3,7 @@ package com.app.feather
 import android.app.Activity
 import android.content.Context
 
-class SharedPreferencesManager(private val activity: Activity?) {
+class SharedPreferencesManager(activity: Activity?) {
     private val userKey = "current_user"
     private val rememberKey = "remember"
     private val userPreference = activity?.getSharedPreferences(
@@ -25,8 +25,8 @@ class SharedPreferencesManager(private val activity: Activity?) {
         }
     }
 
-    fun isRemembered(): Boolean? {
-        return with(userPreference ?: return null) {
+    fun isRemembered(): Boolean {
+        return with(userPreference ?: return false) {
             getBoolean(rememberKey, false)
         }
     }
@@ -38,6 +38,9 @@ class SharedPreferencesManager(private val activity: Activity?) {
     }
 
     fun removeUserPreference() {
-
+        userPreference?.edit().let {
+            it?.remove(rememberKey)
+            it?.remove(userKey)
+        }
     }
 }

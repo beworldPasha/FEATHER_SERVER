@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_app_graph"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.app.feather.MainFragment"
+        android:label="fragment_main"
+        tools:layout="@layout/fragment_main" >
+        <action
+            android:id="@+id/action_mainFragment_to_searchingFragment"
+            app:destination="@id/searchingFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_historyFragment"
+            app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_playlistFragment"
+            app:destination="@id/playlistFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.app.feather.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.app.feather.HistoryFragment"
+        android:label="fragment_history"
+        tools:layout="@layout/fragment_history" >
+        <action
+            android:id="@+id/action_historyFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/searchingFragment"
+        android:name="com.app.feather.SearchingFragment"
+        android:label="fragment_searching"
+        tools:layout="@layout/fragment_searching" >
+        <action
+            android:id="@+id/action_searchingFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/playlistFragment"
+        android:name="com.app.feather.PlaylistFragment"
+        android:label="fragment_playlist"
+        tools:layout="@layout/fragment_playlist" >
+        <action
+            android:id="@+id/action_playlistFragment_to_mainFragment"
+            app:destination="@id/mainFragment" />
+        <action
+            android:id="@+id/action_playlistFragment_to_playerFragment"
+            app:destination="@id/playerFragment" />
+        <action
+            android:id="@+id/action_playlistFragment_to_podcastFragment"
+            app:destination="@id/podcastFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/playerFragment"
+        android:name="com.app.feather.PlayerFragment"
+        android:label="fragment_player"
+        tools:layout="@layout/fragment_player" >
+        <action
+            android:id="@+id/action_playerFragment_to_playlistFragment"
+            app:destination="@id/playlistFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/podcastFragment"
+        android:name="com.app.feather.PodcastFragment"
+        android:label="fragment_podcast"
+        tools:layout="@layout/fragment_podcast" />
+</navigation>
