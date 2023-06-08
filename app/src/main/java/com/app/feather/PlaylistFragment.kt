@@ -1,13 +1,12 @@
 package com.app.feather
 
+import PlayerManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.feather.databinding.FragmentPlaylistBinding
 import com.feather.PlaylistSong
@@ -26,7 +25,6 @@ class PlaylistFragment : Fragment() {
     val songsTag = "SONGS_TAG"
 
     private lateinit var binding: FragmentPlaylistBinding
-    private var applicationNavController: NavController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,31 +47,27 @@ class PlaylistFragment : Fragment() {
         binding.mainPlaylistToolbar.title = playlistName
 
         binding.mainPlaylistRecyclerView.layoutManager = LinearLayoutManager(context)
-        binding.mainPlaylistRecyclerView.adapter = SongsRecyclerAdapter(songs, null)
+        binding.mainPlaylistRecyclerView.adapter =
+            SongsRecyclerAdapter(songs, activity, playlistName)
+
+
+        if (PlayerManager.getInstance()?.player?.isPlaying == true)
+            binding.playlistSongsButton.setImageResource(R.drawable.pause_icon)
+        else binding.playlistSongsButton.setImageResource(R.drawable.play_icon)
+
+
+
+        binding.mainPlaylistToolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+
+        binding.playlistSongsButton.setOnClickListener {
+            if (PlayerManager.getInstance()?.isTrackLoaded() == true)
+                PlayerManager.getInstance()?.togglePlayback()
+            else binding.mainPlaylistRecyclerView.findViewHolderForAdapterPosition(0)
+                ?.itemView?.performClick()
+        }
 
         return view
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.mainPlaylistToolbar.setNavigationOnClickListener {
-            activity?.apply {
-                findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
-                    .getFragment<NavHostFragment>()
-                    .navController
-                    .navigate(R.id.action_playlistFragment_to_mainFragment)
-            }
-
-        }
-        super.onViewCreated(view, savedInstanceState)
-    }
-
-    companion object {
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            PlaylistFragment().apply {
-                arguments = Bundle().apply {
-
-                }
-            }
     }
 }

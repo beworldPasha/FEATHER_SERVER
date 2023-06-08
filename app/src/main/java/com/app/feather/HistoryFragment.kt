@@ -5,8 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.fragment.NavHostFragment
 import com.app.feather.databinding.FragmentHistoryBinding
 
 // TODO: Rename parameter arguments, choose names that match
@@ -45,15 +43,15 @@ class HistoryFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.historyToolbar.setNavigationOnClickListener {
-            activity?.apply {
-                findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
-                    .getFragment<NavHostFragment>()
-                    .navController
-                    .navigate(R.id.action_historyFragment_to_mainFragment)
-            }
-
-        }
+//        binding.historyToolbar.setNavigationOnClickListener {
+//            activity?.apply {
+//                findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
+//                    .getFragment<NavHostFragment>()
+//                    .navController
+//                    .navigate(R.id.action_historyFragment_to_mainFragment)
+//            }
+//
+//        }
         super.onViewCreated(view, savedInstanceState)
     }
 

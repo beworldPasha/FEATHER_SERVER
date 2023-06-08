@@ -1,8 +1,11 @@
 package com.app.feather
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.navigation.NavController
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
 import androidx.recyclerview.widget.RecyclerView
 import com.app.feather.databinding.SongItemBinding
 import com.feather.PlaylistSong
@@ -10,8 +13,11 @@ import com.squareup.picasso.Picasso
 
 class SongsRecyclerAdapter(
     private val songs: Array<PlaylistSong>,
-    private val applicationNavigationController: NavController?
-): RecyclerView.Adapter<SongsRecyclerAdapter.ViewHolder>() {
+    private val activity: FragmentActivity?,
+    private val playlistName: String?
+) : RecyclerView.Adapter<SongsRecyclerAdapter.ViewHolder>() {
+    private var previousSong: SongItemBinding? = null
+    private var firstSongItemBinding: SongItemBinding? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(
@@ -23,21 +29,47 @@ class SongsRecyclerAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val song = songs[position]
-        holder.songName.setText(song.title)
-        holder.artistName.setText(song.artist)
+        holder.songName.text = song.title
+        holder.artistName.text = song.artist
         Picasso.get().load(song.image).into(holder.songImage)
     }
 
-    inner class ViewHolder(binding: SongItemBinding): RecyclerView.ViewHolder(binding.root) {
+    interface CallBackMethod {
+        fun playerSlideUp(
+            songImage: String?,
+            artistName: String?,
+            songName: String?,
+            playlistName: String?
+        )
+    }
+
+    inner class ViewHolder(binding: SongItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val songImage = binding.songImage
         val artistName = binding.songArtistName
         val songName = binding.songName
 
         init {
+            val player = activity
+                ?.findViewById<FragmentContainerView>(R.id.miniPlayerFragmentContainerView)
+                ?.getFragment<PlayerFragment>()
+
             binding.songItem.setOnClickListener {
-//                applicationNavigationController?.navigate(
-//
-//                )
+                val song = songs[position]
+
+                previousSong?.songItem?.setBackgroundColor(
+                    ContextCompat
+                        .getColor(activity?.applicationContext!!, android.R.color.transparent))
+
+                previousSong = binding
+
+                binding.songItem.setBackgroundColor(
+                    ContextCompat
+                        .getColor(activity?.applicationContext!!, R.color.chooseItem))
+
+                player?.start(song.image, song.artist, song.title, playlistName)
+                activity.startService(
+                    Intent(activity, AudioPlayerService::class.java)
+                )
             }
         }
     }

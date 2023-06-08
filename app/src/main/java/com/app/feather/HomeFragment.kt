@@ -5,9 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.feather.databinding.FragmentHomeBinding
 
@@ -20,7 +18,6 @@ class HomeFragment : Fragment() {
     private var param2: String? = null
 
     private lateinit var binding: FragmentHomeBinding
-    private var applicationNavController: NavController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,17 +38,12 @@ class HomeFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        applicationNavController = activity
-            ?.findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
-            ?.getFragment<NavHostFragment>()?.navController
-
         APIManager(context).getPlaylist { playlist ->
             playlist?.let { playlist ->
                 context?.let { context ->
                     val playlists = arrayListOf(playlist)
                     binding.testRecycler.layoutManager = LinearLayoutManager(context)
-                    binding.testRecycler.adapter = PlaylistsRecyclerAdapter(playlists,
-                        applicationNavController)
+                    binding.testRecycler.adapter = PlaylistsRecyclerAdapter(playlists, findNavController())
                 }
             }
         }

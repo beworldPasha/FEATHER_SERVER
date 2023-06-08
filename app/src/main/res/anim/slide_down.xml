@@ -1,0 +1,9 @@
+<!-- slide_down.xml -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <valueAnimator
+        android:duration="500"
+        android:propertyName="height"
+        android:valueFrom="match_parent"
+        android:valueTo="0"
+        android:valueType="intType" />
+</set>

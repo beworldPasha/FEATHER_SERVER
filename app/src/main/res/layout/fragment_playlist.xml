@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="64dp"
                 app:layout_collapseMode="pin"
-                app:navigationIcon="@drawable/feather_logo32" />
+                app:navigationIcon="@drawable/back_icon32" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
@@ -53,8 +53,9 @@
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
+        android:id="@+id/playlistSongsButton"
         android:layout_height="wrap_content"
-        android:src="@drawable/feather_logo32"
+        android:src="@drawable/play_icon"
         app:layout_anchor="@id/main.appbarLayout"
         app:layout_anchorGravity="bottom|center" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

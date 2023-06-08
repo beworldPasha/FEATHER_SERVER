@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
-import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import com.app.feather.databinding.FragmentSettingsBinding
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -43,20 +43,22 @@ class SettingsFragment : Fragment() {
         binding = FragmentSettingsBinding.bind(view)
 
         binding.settingsToolbar.setNavigationOnClickListener {
-            activity?.apply {
-                findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
-                    .getFragment<NavHostFragment>()
-                    .navController
-                    .navigate(R.id.action_settingsFragment_to_mainFragment)
-            }
+//            activity?.apply {
+//                findViewById<FragmentContainerView>(R.id.applicationNavigationFragmentContainerView)
+//                    .getFragment<NavHostFragment>()
+//                    .navController
+//                    .navigate(R.id.action_settingsFragment_to_mainFragment)
+//            }
 
+        }
+        binding.settingsToolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+            activity
+                ?.findViewById<BottomNavigationView>(R.id.bottomNavigationView)
+                ?.visibility = View.VISIBLE
         }
 
         return view
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     companion object {

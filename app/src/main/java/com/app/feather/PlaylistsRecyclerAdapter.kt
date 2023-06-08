@@ -44,7 +44,7 @@ class PlaylistsRecyclerAdapter(
         init {
             binding.playlistCardView.setOnClickListener {
                 applicationNavigationController?.navigate(
-                    R.id.action_mainFragment_to_playlistFragment,
+                    R.id.action_homeFragment_to_playlistFragment,
                     Bundle().apply {
                         putString(playlistNameTag, playlists[position].name)
                         putString(artistNameTag, playlists[position].artists[0])

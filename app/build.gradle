@@ -57,6 +57,12 @@ dependencies {
     implementation("androidx.navigation:navigation-dynamic-features-fragment:2.5.3")
     androidTestImplementation("androidx.navigation:navigation-testing:2.5.3")
 
+    //Exo Player
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.16.0'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.16.0'
+
+
+
 
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.core:core-ktx:1.10.1'
